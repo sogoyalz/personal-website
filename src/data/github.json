@@ -1,0 +1,273 @@
+{
+  "checkedAt": "2026-09-21",
+  "profileUrl": "https://github.com/sogoyalz",
+  "repositories": [
+    {
+      "name": "ReelTogether",
+      "url": "https://github.com/sogoyalz/ReelTogether",
+      "description": null,
+      "language": "Python",
+      "fork": false,
+      "archived": false,
+      "updated": "2026-09-16",
+      "parent": null
+    },
+    {
+      "name": "Doomscroll",
+      "url": "https://github.com/sogoyalz/Doomscroll",
+      "description": null,
+      "language": "TypeScript",
+      "fork": false,
+      "archived": false,
+      "updated": "2026-09-09",
+      "parent": null
+    },
+    {
+      "name": "flam-psi",
+      "url": "https://github.com/sogoyalz/flam-psi",
+      "description": "Shrub flammability and water potential",
+      "language": null,
+      "fork": true,
+      "archived": false,
+      "updated": "2026-09-07",
+      "parent": "schwilklab/flam-psi"
+    },
+    {
+      "name": "hydra-blast-radius",
+      "url": "https://github.com/sogoyalz/hydra-blast-radius",
+      "description": "Supply-chain blast radius for npm, built on HydraDB. Answers what is exposed when a package is compromised — including the packages reachable through shared publish rights that dependency scanning misses. Hack Hydra 2026, Track 2A.",
+      "language": "JavaScript",
+      "fork": false,
+      "archived": false,
+      "updated": "2026-08-20",
+      "parent": null
+    },
+    {
+      "name": "sogoyalz",
+      "url": "https://github.com/sogoyalz/sogoyalz",
+      "description": null,
+      "language": "Python",
+      "fork": false,
+      "archived": false,
+      "updated": "2026-08-18",
+      "parent": null
+    },
+    {
+      "name": "github-readme-stats",
+      "url": "https://github.com/sogoyalz/github-readme-stats",
+      "description": ":zap: Dynamically generated stats for your github readmes",
+      "language": null,
+      "fork": true,
+      "archived": false,
+      "updated": "2026-07-31",
+      "parent": "anuraghazra/github-readme-stats"
+    },
+    {
+      "name": "mintlify-docs",
+      "url": "https://github.com/sogoyalz/mintlify-docs",
+      "description": "Mintlify-powered public API and product documentation site for HydraDB",
+      "language": null,
+      "fork": true,
+      "archived": false,
+      "updated": "2026-07-20",
+      "parent": "hydra-db/mintlify-docs"
+    },
+    {
+      "name": "movie",
+      "url": "https://github.com/sogoyalz/movie",
+      "description": null,
+      "language": "Python",
+      "fork": false,
+      "archived": false,
+      "updated": "2026-03-21",
+      "parent": null
+    },
+    {
+      "name": "air",
+      "url": "https://github.com/sogoyalz/air",
+      "description": null,
+      "language": "JavaScript",
+      "fork": false,
+      "archived": true,
+      "updated": "2025-12-23",
+      "parent": null
+    },
+    {
+      "name": "get-probe",
+      "url": "https://github.com/sogoyalz/get-probe",
+      "description": null,
+      "language": null,
+      "fork": false,
+      "archived": false,
+      "updated": "2025-11-28",
+      "parent": null
+    },
+    {
+      "name": "Webbb",
+      "url": "https://github.com/sogoyalz/Webbb",
+      "description": null,
+      "language": "JavaScript",
+      "fork": false,
+      "archived": false,
+      "updated": "2025-11-20",
+      "parent": null
+    },
+    {
+      "name": "ai-memory-replica",
+      "url": "https://github.com/sogoyalz/ai-memory-replica",
+      "description": null,
+      "language": "TypeScript",
+      "fork": false,
+      "archived": false,
+      "updated": "2025-10-23",
+      "parent": null
+    },
+    {
+      "name": "juno",
+      "url": "https://github.com/sogoyalz/juno",
+      "description": "A next-gen serverless platform to build, deploy, and run modern apps with the privacy and control of self-hosting.",
+      "language": "TypeScript",
+      "fork": true,
+      "archived": false,
+      "updated": "2025-10-22",
+      "parent": "junobuild/juno"
+    },
+    {
+      "name": "probep",
+      "url": "https://github.com/sogoyalz/probep",
+      "description": null,
+      "language": "HTML",
+      "fork": true,
+      "archived": false,
+      "updated": "2025-10-15",
+      "parent": "Sahil5H4RD4/probe"
+    },
+    {
+      "name": "IG",
+      "url": "https://github.com/sogoyalz/IG",
+      "description": null,
+      "language": "TypeScript",
+      "fork": false,
+      "archived": false,
+      "updated": "2025-10-14",
+      "parent": null
+    },
+    {
+      "name": "EduHaven",
+      "url": "https://github.com/sogoyalz/EduHaven",
+      "description": " EduHaven: A Student-Centric Learning Platform",
+      "language": "JavaScript",
+      "fork": true,
+      "archived": false,
+      "updated": "2025-10-14",
+      "parent": "EduHaven/EduHaven"
+    },
+    {
+      "name": "TaskManDash",
+      "url": "https://github.com/sogoyalz/TaskManDash",
+      "description": null,
+      "language": null,
+      "fork": true,
+      "archived": false,
+      "updated": "2025-10-11",
+      "parent": "bhadradebapriya2021-bit/TaskManDash"
+    },
+    {
+      "name": "ghostfolio",
+      "url": "https://github.com/sogoyalz/ghostfolio",
+      "description": "Open Source Wealth Management Software. Angular + NestJS + Prisma + Nx + TypeScript 🤍",
+      "language": null,
+      "fork": true,
+      "archived": false,
+      "updated": "2025-10-11",
+      "parent": "ghostfolio/ghostfolio"
+    },
+    {
+      "name": "gdg-babcock-hacktoberfest-2025",
+      "url": "https://github.com/sogoyalz/gdg-babcock-hacktoberfest-2025",
+      "description": "Central hub for GDG Babcock Hacktoberfest 2025 — links to projects, contribution guides, and event resources.",
+      "language": null,
+      "fork": true,
+      "archived": false,
+      "updated": "2025-10-08",
+      "parent": "GDGBabcockUniversity/gdg-babcock-hacktoberfest-2025"
+    },
+    {
+      "name": "MailLogSentinel",
+      "url": "https://github.com/sogoyalz/MailLogSentinel",
+      "description": "Lightweight Postfix SASL log watchdog. Under systemd, it tails mail logs incrementally (near-real time), appends normalized events to a CSV, daily email summarizes activity, and export to SQLite database.",
+      "language": null,
+      "fork": true,
+      "archived": false,
+      "updated": "2025-10-06",
+      "parent": "monozoide/MailLogSentinel"
+    },
+    {
+      "name": "YouTube-Download-Manager",
+      "url": "https://github.com/sogoyalz/YouTube-Download-Manager",
+      "description": "YouTube Download Manager is a Flutter mobile application developed as part of an academic assignment submission by the project owner. The app provides users a simple and intuitive way to fetch YouTube video information and download videos directly to their device, with the ability to select the desired video quality.",
+      "language": null,
+      "fork": true,
+      "archived": false,
+      "updated": "2025-10-04",
+      "parent": "aavvvacado/YouTube-Download-Manager"
+    },
+    {
+      "name": "beginner-python-mini-projects-hacktoberfest-2025",
+      "url": "https://github.com/sogoyalz/beginner-python-mini-projects-hacktoberfest-2025",
+      "description": "Beginner Python Mini Projects – Hacktoberfest 2025",
+      "language": "Python",
+      "fork": true,
+      "archived": false,
+      "updated": "2025-10-03",
+      "parent": "arya2004/beginner-python-mini-projects-hacktoberfest-2025"
+    },
+    {
+      "name": "ENGR1330",
+      "url": "https://github.com/sogoyalz/ENGR1330",
+      "description": null,
+      "language": "Jupyter Notebook",
+      "fork": false,
+      "archived": false,
+      "updated": "2025-02-16",
+      "parent": null
+    }
+  ],
+  "contributions": [
+    {
+      "title": "feat(frontend): Do not display tabs if Mission Control not found and while loading #2121",
+      "url": "https://github.com/junobuild/juno/pull/2122",
+      "repo": "junobuild/juno"
+    },
+    {
+      "title": "page not found 404",
+      "url": "https://github.com/GDGBabcockUniversity/gdg-babcock-hacktoberfest-2025/pull/27",
+      "repo": "GDGBabcockUniversity/gdg-babcock-hacktoberfest-2025"
+    },
+    {
+      "title": "updated ui/ux ",
+      "url": "https://github.com/aavvvacado/YouTube-Download-Manager/pull/3",
+      "repo": "aavvvacado/YouTube-Download-Manager"
+    },
+    {
+      "title": "Update notes app project",
+      "url": "https://github.com/arya2004/beginner-python-mini-projects-hacktoberfest-2025/pull/56",
+      "repo": "arya2004/beginner-python-mini-projects-hacktoberfest-2025"
+    },
+    {
+      "title": "Add souravgoyal-text-analyzer-cli: beginner-friendly text analyzer CLI",
+      "url": "https://github.com/arya2004/beginner-python-mini-projects-hacktoberfest-2025/pull/54",
+      "repo": "arya2004/beginner-python-mini-projects-hacktoberfest-2025"
+    },
+    {
+      "title": "Website by Sourav",
+      "url": "https://github.com/avinash201199/Hacktoberfest2025/pull/5",
+      "repo": "avinash201199/Hacktoberfest2025"
+    },
+    {
+      "title": "landing page",
+      "url": "https://github.com/garrgi11/neurosole/pull/2",
+      "repo": "garrgi11/neurosole"
+    }
+  ]
+}

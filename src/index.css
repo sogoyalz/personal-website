@@ -1,0 +1,327 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Semantic tokens — light values; flipped by the .dark block below. */
+  --color-surface: #fafafa;
+  --color-card: #ffffff;
+  --color-card-hover: #f5f5f5;
+  --color-fg: #0a0a0a;
+  --color-body: #525252;
+  --color-muted: #6b6b6b;
+  --color-line: #e5e5e5;
+  --color-line-strong: #d4d4d4;
+  --color-grid: rgba(0, 0, 0, 0.055);
+
+  /* Constant regardless of theme — black inset panels + footer. */
+  --color-inset: #0a0a0a;
+  --color-inset-line: rgba(255, 255, 255, 0.14);
+  --color-inset-fg: #f5f5f5;
+  --color-inset-body: #a3a3a3;
+
+  /* Status dots only (terminal chrome). */
+  --color-ok: #22c55e;
+  --color-err: #ef4444;
+  --color-warn: #f59e0b;
+
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+  --font-display: 'Doto', 'JetBrains Mono', monospace;
+  --font-serif: 'Georgia', ui-serif, 'Times New Roman', serif;
+
+  --animate-marquee: marquee 32s linear infinite;
+  --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+}
+
+.dark {
+  --color-surface: #0a0a0a;
+  --color-card: #111111;
+  --color-card-hover: #171717;
+  --color-fg: #f5f5f5;
+  --color-body: #a3a3a3;
+  --color-muted: #8a8a8a;
+  --color-line: rgba(255, 255, 255, 0.12);
+  --color-line-strong: rgba(255, 255, 255, 0.22);
+  --color-grid: rgba(255, 255, 255, 0.045);
+}
+
+/* ── Poetry: a warm literary world scoped to .poetry-scope ──
+   Slightly warmer paper + ink than the stark portfolio grays.
+   Paired light/dark values flip with the same .dark class as
+   every other token, so nothing outside this scope is affected. */
+.poetry-scope {
+  --paper: #f7f4ee;         /* warm off-white page */
+  --ink: #2b2622;           /* soft warm-black title ink */
+  --ink-body: #4a433c;      /* warm-gray body ink */
+  --ink-muted: #9a9084;     /* numeral / meta accent */
+  --paper-line: #e4ded3;    /* hairline dividers */
+}
+.dark .poetry-scope {
+  --paper: #0c0b0a;         /* deep warm-charcoal page */
+  --ink: #efe9df;           /* warm bone title ink */
+  --ink-body: #b8ad9f;      /* warm-gray body ink */
+  --ink-muted: #6b6357;     /* numeral / meta accent */
+  --paper-line: rgba(255, 255, 255, 0.10);
+}
+
+/* Quiet, non-mono filter pill for the poetry mood filter. */
+@utility poem-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  color: var(--ink-body);
+  background: transparent;
+  border: 1px solid var(--paper-line);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  transition: color 0.18s, background 0.18s, border-color 0.18s;
+}
+.poem-pill:hover {
+  border-color: var(--ink-muted);
+  color: var(--ink);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  transition: background 0.25s, color 0.25s;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-fg);
+  color: var(--color-surface);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-fg);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.bg-inset :focus-visible,
+.text-inset-fg:focus-visible {
+  outline-color: var(--color-inset-fg);
+}
+
+/* Graph-paper backdrop. */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, var(--color-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Fades the grid out toward the bottom so sections blend into the surface. */
+@utility grid-fade {
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+
+/* Scanline texture for black inset panels. */
+@utility bg-scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.035) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+@utility btn-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--color-fg);
+  color: var(--color-surface);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.8rem 1.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-fg);
+  transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.btn-solid:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.35);
+}
+.btn-solid:active {
+  transform: translateY(0);
+}
+
+@utility btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--color-card);
+  color: var(--color-fg);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.8rem 1.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-line-strong);
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.btn-outline:hover {
+  border-color: var(--color-fg);
+  transform: translateY(-1px);
+}
+.btn-outline:active {
+  transform: translateY(0);
+}
+
+/* File-chip, like Trace's "Checkout.tsx +94". */
+@utility chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: var(--color-body);
+  border: 1px solid var(--color-line);
+  background: var(--color-card);
+  border-radius: 3px;
+  padding: 0.25rem 0.55rem;
+  white-space: nowrap;
+}
+
+/* Rectangular tab, like Trace's UI BUG | NETWORK FAIL switcher.
+   Active state applied in JSX: bg-card border-line-strong text-fg shadow-sm */
+@utility tab-pill {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.5rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+/* "THE LOOP"-style micro-label. */
+@utility label-micro {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--color-muted);
+}
+
+/* Dotted-matrix stat numbers (Doto). */
+@utility stat-number {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  body {
+    transition: none;
+  }
+  .animate-marquee {
+    animation: none;
+  }
+  .btn-solid:hover,
+  .btn-outline:hover {
+    transform: none;
+  }
+}
+
+/* A little sketchbook, with a resident studio crew. */
+:root {
+  --color-surface: #faf8f1;
+  --color-card: #fffdf7;
+  --color-card-hover: #f3f0e6;
+  --color-grid: rgba(92, 106, 68, 0.075);
+  --friend-accent: #527040;
+}
+.dark { --friend-accent: #b4cf8c; }
+.hero-sketchbook { border-bottom: 1px solid var(--color-line); }
+.hero-sketchbook h1 > span:first-child { text-decoration: underline; text-decoration-color: #b4cf8c; text-decoration-thickness: 5px; text-underline-offset: 10px; }
+.hero-doodles { pointer-events: none; position: absolute; inset: 0; color: var(--friend-accent); }
+.hero-doodles span { position: absolute; }
+.hero-doodles span:nth-child(1) { top: 25%; left: 8%; font-size: 65px; transform: rotate(-14deg); }
+.hero-doodles span:nth-child(2) { top: 39%; right: 8%; color: #d49b64; font-size: 48px; }
+.hero-doodles span:nth-child(3) { top: 63%; left: 15%; font-size: 40px; }
+.hero-doodles span:nth-child(4) { right: 5%; top: 19%; font: italic 19px Georgia, serif; transform: rotate(9deg); }
+.little-friends { max-width: 760px; margin: 48px auto 0; }
+.friends-caption { font-size: 10px; letter-spacing: .04em; color: var(--color-muted); }
+.friends-caption > span:first-child { color: var(--friend-accent); font-size: 17px; vertical-align: middle; margin-right: 8px; }
+.friends-hint { font-family: Georgia, serif; font-style: italic; font-size: 15px; margin-left: 15px; }
+.friends-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-top: 22px; }
+.friend { display: flex; flex-direction: column; align-items: center; border: 0; background: none; color: var(--color-fg); cursor: pointer; min-width: 0; padding: 6px 0 12px; border-radius: 16px; }
+.friend-speech { display: grid; place-items: center; min-height: 46px; width: 100%; max-width: 216px; padding: 7px 12px; background: var(--color-card); border: 1px solid var(--color-line-strong); border-radius: 15px 15px 15px 2px; font-size: 10px; line-height: 1.5; transform: rotate(-3deg); transition: border-color .2s; }
+.friend-frog .friend-speech { transform: rotate(2deg); }
+.friend-snail .friend-speech { transform: rotate(-2deg); }
+.friend-dog .friend-speech { transform: rotate(3deg); }
+.dog-tail { transform-origin: 124px 102px; }
+.friend-dog:hover .dog-tail, .friend-dog:focus-visible .dog-tail { animation: tail-wag .3s ease-in-out infinite alternate; }
+@keyframes tail-wag { from { transform: rotate(-12deg); } to { transform: rotate(16deg); } }
+.critter { width: 160px; height: 125px; overflow: visible; flex-shrink: 0; transition: transform .25s ease; }
+.friend:hover .critter, .friend:focus-visible .critter { transform: translateY(-7px) rotate(-5deg); }
+.friend-frog:hover .critter, .friend-frog:focus-visible .critter { transform: translateY(-10px) rotate(4deg); }
+.friend:hover .friend-speech { border-color: var(--friend-accent); }
+.friend:active .critter { transform: scale(.94); }
+.friend-name { font-size: 11px; font-weight: 700; }
+.friend-name > span { display: block; font-size: 9px; font-weight: 400; color: var(--color-muted); margin-top: 4px; }
+.portrait-cat { position: absolute; top: -65px; right: -25px; transform: rotate(9deg); pointer-events: none; }
+.portrait-cat .critter { width: 100px; height: 85px; }
+.portrait-cat > span { display: block; font: italic 13px Georgia, serif; background: var(--color-card); padding: 5px 9px; border: 1px solid var(--color-line); border-radius: 3px; }
+.footer-friend { display: flex; align-items: center; justify-content: center; gap: 20px; padding-bottom: 35px; margin-bottom: 45px; border-bottom: 1px dashed var(--color-inset-line); }
+.footer-friend .critter { width: 105px; height: 90px; transform: rotate(-7deg); }
+.footer-friend p { font-size: 12px; line-height: 1.9; color: #f4f0df; }
+.footer-friend p span { color: #a3a3a3; font-size: 10px; }
+.footer-friend > span { font-size: 36px; color: #b4cf8c; }
+@media (max-width: 700px) {
+  .hero-doodles span:nth-child(1) { top: 13%; left: 4%; font-size: 28px; }
+  .hero-doodles span:nth-child(2) { top: 46%; right: 3%; font-size: 24px; }
+  .hero-doodles span:nth-child(3), .hero-doodles span:nth-child(4) { display: none; }
+  .friends-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .friend .critter { width: 100%; max-width: 160px; height: auto; }
+  .friend-speech { font-size: 9px; padding: 6px; min-height: 54px; }
+  .friend-name > span { font-size: 8px; max-width: 95px; }
+  .friends-hint { display: none; }
+  .portrait-cat { right: 0; }
+  .footer-friend { gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .critter { transition: none; }
+  .friend-dog:hover .dog-tail, .friend-dog:focus-visible .dog-tail { animation: none; }
+  .friend:hover .critter, .friend:focus-visible .critter, .friend:active .critter { transform: none; }
+}
