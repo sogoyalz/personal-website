@@ -8,7 +8,6 @@ import {
   FiMail,
   FiMapPin,
   FiArrowUp,
-  FiFileText,
   FiPhone,
 } from 'react-icons/fi'
 import { navLinks, socials, email, location, phone } from '../data/content'
@@ -27,7 +26,6 @@ const highlights = [
   { label: 'Hydra Blast Radius', href: 'https://github.com/sogoyalz/hydra-blast-radius' },
   { label: 'GitHub Projects', href: 'https://github.com/sogoyalz' },
   { label: 'ReelTogether', href: 'https://github.com/sogoyalz/ReelTogether' },
-  { label: 'Download Résumé', href: '/resume.pdf' },
 ]
 
 // Black in both themes — uses the non-flipping inset tokens.
@@ -122,7 +120,6 @@ export default function Footer() {
                     rel="noreferrer"
                     className="text-[0.85rem] text-inset-body hover:text-inset-fg transition-colors inline-flex items-center gap-1.5"
                   >
-                    {h.label === 'Download Résumé' && <FiFileText size={13} />}
                     {h.label}
                   </a>
                 </li>

@@ -70,14 +70,6 @@ export default function Navbar() {
         {/* Right side */}
         <div className="hidden lg:flex items-center gap-3">
           <ThemeToggle />
-          <a
-            href="/resume.pdf"
-            target="_blank"
-            rel="noreferrer"
-            className="btn-outline !px-4 !py-2 !text-[0.7rem]"
-          >
-            Résumé
-          </a>
           <Link to="/contact" className="btn-solid !px-4 !py-2 !text-[0.7rem]">
             Get In Touch
           </Link>
@@ -120,16 +112,6 @@ export default function Navbar() {
                     </NavLink>
                   </li>
                 ))}
-                <li>
-                  <a
-                    href="/resume.pdf"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-mono text-[0.72rem] uppercase tracking-[0.12em] font-semibold text-fg"
-                  >
-                    Résumé →
-                  </a>
-                </li>
               </ul>
               <div className="mt-5 pt-4 border-t border-line flex items-center gap-3">
                 <ThemeToggle />

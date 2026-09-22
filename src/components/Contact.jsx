@@ -32,9 +32,6 @@ export default function Contact() {
           <a href={`mailto:${email}`} className="btn-solid">
             <FiMail /> Say Hello
           </a>
-          <a href="/resume.pdf" target="_blank" rel="noreferrer" className="btn-outline">
-            View Résumé
-          </a>
         </div>
 
         <div className="mt-12 flex items-center justify-center gap-x-8 gap-y-2 flex-wrap font-mono text-[0.8rem] text-muted">
