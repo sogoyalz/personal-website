@@ -37,19 +37,19 @@ a, button { cursor: none; color: inherit; }
 #cursor { position: fixed; inset: 0; pointer-events: none; z-index: 90; }
 #track { position: relative; z-index: 1; height: 1500vh; pointer-events: none; }
 
-/* vignette + scanline grain for a filmic finish */
-.film { position: fixed; inset: 0; pointer-events: none; z-index: 2;
-  background: radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.65) 100%); }
-.film::after { content: ""; position: absolute; inset: 0; opacity: .07; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); animation: grain .5s steps(2) infinite; }
-@keyframes grain { 50% { transform: translate(-2%, 1%); } }
+/* letterbox: widescreen bars that close in once you enter */
+.film { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
+.film::before, .film::after { content: ""; position: absolute; left: 0; right: 0; height: clamp(34px, 8.5vh, 84px); background: #000; transition: transform 2.4s cubic-bezier(.7,0,.2,1); }
+.film::before { top: 0; transform: translateY(-100%); box-shadow: 0 18px 40px 10px rgba(0,0,0,.55); }
+.film::after { bottom: 0; transform: translateY(100%); box-shadow: 0 -18px 40px 10px rgba(0,0,0,.55); }
+body.rolling .film::before, body.rolling .film::after { transform: none; }
 
 /* ── HUD ── */
-.hud { position: fixed; z-index: 20; pointer-events: none; color: var(--dim); }
-.hud.tl { top: 22px; left: var(--g); display: flex; align-items: center; gap: 14px; pointer-events: auto; }
-.hud.tr { top: 22px; right: var(--g); text-align: right; }
-.hud.bl { bottom: 22px; left: var(--g); line-height: 1.8; }
-.hud.br { bottom: 22px; right: var(--g); display: flex; align-items: center; gap: 14px; }
+.hud { position: fixed; z-index: 30; pointer-events: none; color: var(--dim); }
+.hud.tl { top: clamp(6px, 2.2vh, 24px); left: var(--g); display: flex; align-items: center; gap: 14px; pointer-events: auto; }
+.hud.tr { top: clamp(6px, 2.2vh, 24px); right: var(--g); text-align: right; }
+.hud.bl { bottom: clamp(4px, 1.6vh, 18px); left: var(--g); line-height: 1.8; }
+.hud.br { bottom: clamp(6px, 2vh, 20px); right: var(--g); display: flex; align-items: center; gap: 14px; }
 .emblem { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--signal); display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 15px; color: var(--signal); letter-spacing: .02em; box-shadow: 0 0 18px rgba(255,181,71,.35), inset 0 0 10px rgba(255,181,71,.25); }
 .hud .chap { color: var(--star); font-family: var(--display); font-weight: 600; font-size: 22px; letter-spacing: .06em; text-transform: uppercase; display: block; margin-top: 2px; }
 .ring { width: 44px; height: 44px; }
@@ -63,6 +63,8 @@ a, button { cursor: none; color: inherit; }
 
 /* ── beats: text that lives at a point in the film ── */
 .beat { position: fixed; z-index: 10; pointer-events: none; opacity: 0; will-change: opacity, transform, filter; }
+.center::before { content: ""; position: absolute; inset: -30% -12%; z-index: -1; background: radial-gradient(closest-side, rgba(2,3,8,.62), rgba(2,3,8,0)); filter: blur(24px); }
+.left:not(.proj)::before { content: ""; position: absolute; inset: -20% -30% -20% -40%; z-index: -1; background: radial-gradient(closest-side, rgba(2,3,8,.5), rgba(2,3,8,0)); filter: blur(30px); }
 .beat.live { pointer-events: auto; }
 .left { left: var(--g); top: 50%; max-width: min(560px, 86vw); }
 .center { left: 50%; top: 50%; text-align: center; width: min(1100px, 92vw); }
@@ -70,7 +72,8 @@ a, button { cursor: none; color: inherit; }
 .hero-name { font-family: var(--display); font-weight: 900; text-transform: uppercase; line-height: .8; letter-spacing: .01em; font-size: clamp(84px, 15vw, 250px); margin: 18px 0 22px; }
 .hero-name .l { display: inline-block; }
 .hero-name .row { display: block; white-space: nowrap; }
-.hero-name .row + .row { -webkit-text-stroke: 1.5px var(--star); color: transparent; }
+.hero-name .row + .row { -webkit-text-stroke: 1.5px rgba(243,241,234,.85); color: transparent; }
+.hero-name .row:first-child .l { background: linear-gradient(180deg, #ffffff 25%, #d6cdbb 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .eyebrow { color: var(--signal); display: flex; gap: 16px; align-items: center; }
 .eyebrow::before { content: ""; width: 34px; height: 1px; background: var(--signal); }
 .hero-sub { color: var(--dim); font-size: clamp(15px, 1.25vw, 18px); max-width: 44ch; line-height: 1.6; margin: 0; }
@@ -81,10 +84,11 @@ a, button { cursor: none; color: inherit; }
 @keyframes drop { from { top: -12px; } to { top: 46px; } }
 
 .verse { font-family: var(--verse); font-style: italic; font-weight: 300; font-size: clamp(40px, 6.4vw, 104px); line-height: 1.02; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
-.verse em { color: var(--signal); font-style: italic; }
+.verse em { font-style: italic; background: linear-gradient(100deg, #ffd88f 0%, #ffb547 45%, #ff8a63 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .12em; }
 .verse-small { margin-top: 18px; color: var(--dim); font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
 
-.dossier { background: var(--glass); backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); border: 1px solid rgba(255,255,255,.08); border-radius: 4px; padding: 28px 30px 26px; position: relative; }
+.dossier { background: linear-gradient(155deg, rgba(28,34,52,.62) 0%, rgba(10,12,20,.42) 55%, rgba(48,28,12,.34) 100%); backdrop-filter: blur(22px) saturate(1.5); -webkit-backdrop-filter: blur(22px) saturate(1.5); border: 1px solid rgba(255,255,255,.07); border-radius: 6px; padding: 28px 30px 26px; position: relative; box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 40px 90px -20px rgba(0,0,0,.65); }
+.dossier h2 { background: linear-gradient(180deg, #fffdf7 30%, #c9bea9 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .dossier::before, .dossier::after { content: ""; position: absolute; width: 14px; height: 14px; border-color: var(--signal); border-style: solid; }
 .dossier::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
 .dossier::after { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
@@ -114,7 +118,7 @@ a, button { cursor: none; color: inherit; }
 .slabel.future h3 { color: var(--dim); }
 
 .signal-title { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(64px, 11vw, 190px); line-height: .82; margin: 0 0 26px; text-wrap: balance; }
-.signal-title span { color: var(--signal); text-shadow: 0 0 40px rgba(255,181,71,.45); }
+.signal-title span { background: linear-gradient(180deg, #ffe2a6 0%, #ffb547 55%, #ff8a4a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 28px rgba(255,170,70,.45)); }
 .contact-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: center; }
 .mail { font-family: var(--display); font-weight: 600; font-size: clamp(26px, 3.4vw, 46px); letter-spacing: .02em; text-decoration: none; border-bottom: 1px solid rgba(255,181,71,.4); }
 .btn { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; background: transparent; border: 1px solid var(--signal); color: var(--signal); padding: 10px 16px; border-radius: 999px; transition: background .3s, color .3s; }
@@ -157,7 +161,7 @@ a, button { cursor: none; color: inherit; }
   .stats b { font-size: 30px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .film::after, .launch i::after { animation: none; }
+  .launch i::after { animation: none; }
 }
 </style>
 </head>
@@ -376,6 +380,58 @@ const composer = new THREE.EffectComposer(renderer);
 composer.addPass(new THREE.RenderPass(scene, camera));
 const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.9, 0.6, 0.32);
 composer.addPass(bloom);
+// the "camera": filmic tone curve, split-tone grade per chapter, anamorphic streaks,
+// chromatic fringing and soft focus toward the frame edges, vignette and grain
+const grade = new THREE.ShaderPass({
+  uniforms: { tDiffuse: { value: null }, uRes: { value: new THREE.Vector2(innerWidth, innerHeight) }, uTime: { value: 0 },
+    uAb: { value: 1.5 }, uFlare: { value: 1 }, uExp: { value: 1.12 }, uSat: { value: .9 }, uCon: { value: 1.08 },
+    uLift: { value: new THREE.Vector3(0, .02, .04) }, uGain: { value: new THREE.Vector3(1.04, 1, .95) }, uShadow: { value: new THREE.Vector3(-.01, .02, .04) }, uHigh: { value: new THREE.Vector3(.04, .012, -.025) }, uEdge: { value: 1 } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+  fragmentShader: `uniform sampler2D tDiffuse; uniform vec2 uRes; uniform float uTime; uniform float uAb; uniform float uFlare; uniform float uExp; uniform float uSat; uniform float uCon; uniform float uEdge;
+    uniform vec3 uLift; uniform vec3 uGain; uniform vec3 uShadow; uniform vec3 uHigh; varying vec2 vUv;
+    vec3 aces(vec3 x){ return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.); }
+    float hash(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
+    void main(){
+      vec2 uv=vUv; vec2 c=uv-.5; float asp=uRes.x/uRes.y; float r=length(c*vec2(asp,1.));
+      vec2 px=1./uRes;
+      vec2 off=c*px*uAb*(1.+r*r*6.);
+      vec3 col=vec3(texture2D(tDiffuse,uv+off).r, texture2D(tDiffuse,uv).g, texture2D(tDiffuse,uv-off).b);
+      // soft focus toward the edges of frame
+      float eb=smoothstep(.42,1.05,r)*uEdge;
+      if(eb>.001){ vec3 bl=vec3(0.); float rad=eb*9.;
+        for(int i=0;i<10;i++){ float a=float(i)*.6283+.3; bl+=texture2D(tDiffuse,uv+vec2(cos(a),sin(a))*px*rad).rgb; }
+        col=mix(col,bl*.1,eb*.85); }
+      // anamorphic streaks from the brightest light
+      vec3 st=vec3(0.);
+      for(int i=1;i<=14;i++){ float o=float(i)*px.x*9.; float w=1.-float(i)/15.;
+        st+=(max(texture2D(tDiffuse,uv+vec2(o,0.)).rgb-.82,0.)+max(texture2D(tDiffuse,uv-vec2(o,0.)).rgb-.82,0.))*w; }
+      col+=dot(st,vec3(.33))*vec3(.32,.55,1.)*.22*uFlare;
+      // filmic tone curve
+      col=aces(col*uExp*1.25);
+      // lift / gain, saturation, contrast
+      col=col*uGain+uLift*(1.-col);
+      float l=dot(col,vec3(.2126,.7152,.0722));
+      col=mix(vec3(l),col,uSat);
+      col=clamp((col-.5)*uCon+.5,0.,1.);
+      // split tone: cool shadows, warm highlights
+      col+=mix(uShadow,uHigh,smoothstep(.15,.75,l))*(1.-abs(l-.5));
+      // vignette
+      col*=1.-smoothstep(.55,1.25,r)*.7;
+      // grain, stronger in the shadows like real film
+      float g=hash(uv*uRes+fract(uTime*7.)*91.)-.5; col+=g*.05*(1.2-l);
+      gl_FragColor=vec4(col,1.); }`
+});
+composer.addPass(grade);
+// grade per chapter: home, origin, galaxy, worlds, constellation, signal
+const GRADES = [
+  { lift: [0, .02, .045], gain: [1.04, 1.0, .95], sh: [-.012, .018, .045], hi: [.045, .015, -.03], sat: .88, con: 1.08, exp: 1.08 },
+  { lift: [.005, .015, .05], gain: [1.0, .99, 1.0], sh: [-.01, .01, .05], hi: [.03, .01, -.01], sat: .82, con: 1.1, exp: 1.0 },
+  { lift: [.03, .005, .05], gain: [1.06, .97, 1.0], sh: [.0, -.005, .05], hi: [.05, .01, -.02], sat: 1.0, con: 1.06, exp: 1.0 },
+  { lift: [.02, .012, .035], gain: [1.07, 1.0, .9], sh: [-.01, .015, .04], hi: [.05, .02, -.035], sat: .92, con: 1.1, exp: .98 },
+  { lift: [0, .02, .065], gain: [.95, 1.0, 1.07], sh: [-.015, .015, .06], hi: [.03, .015, .0], sat: .8, con: 1.08, exp: 1.05 },
+  { lift: [0, .03, .05], gain: [1.1, .98, .86], sh: [-.02, .03, .05], hi: [.06, .02, -.04], sat: .72, con: 1.16, exp: 1.1 },
+];
+const gradeNow = { lift: new THREE.Vector3(), gain: new THREE.Vector3(), sh: new THREE.Vector3(), hi: new THREE.Vector3() };
 
 const NOISE = `
 vec3 mod289(vec3 x){return x-floor(x*(1./289.))*289.;}
@@ -652,7 +708,7 @@ const cloud = new THREE.Mesh(new THREE.PlaneGeometry(2600, 2000, 1, 1), new THRE
       float dens=smoothstep(-.35,.5,n+n2*.4);
       vec2 e=(vW.xz-uE.xz)/vec2(170.,140.); vec4 em=texture2D(uMap,e*.5+.5)*step(abs(e.x),1.)*step(abs(e.y),1.);
       float wob=.85+.25*n2;
-      vec3 col=vec3(.05,.055,.075)*dens + vec3(1.,.7,.3)*em.rgb*em.a*uOn*(.6+.6*dens)*wob*1.6;
+      vec3 col=vec3(.05,.055,.075)*dens + vec3(1.,.7,.3)*em.rgb*em.a*uOn*(.55+.35*dens)*wob*.95;
       float spill=exp(-dot(e,e)*.35)*uOn; col+=vec3(1.,.6,.25)*spill*.18*dens;
       float edge=smoothstep(1250.,700.,length(vW.xz-uE.xz));
       gl_FragColor=vec4(col,(dens*.9+em.a*uOn*.5)*edge); }` }));
@@ -766,7 +822,7 @@ function updateDom(p, t) {
 /* ═════════ resize ═════════ */
 function resize() {
   const w = innerWidth, h = innerHeight;
-  renderer.setSize(w, h, false); composer.setSize(w, h); bloom.setSize(w * DPR, h * DPR);
+  renderer.setSize(w, h, false); composer.setSize(w, h); bloom.setSize(w * DPR, h * DPR); grade.uniforms.uRes.value.set(w * DPR, h * DPR);
   camera.aspect = w / h; camera.fov = w < h ? 70 : 55; camera.updateProjectionMatrix(); sizeCursor();
 }
 resize(); addEventListener('resize', resize);
@@ -875,6 +931,13 @@ function frame(now) {
     warpGeo.attributes.position.needsUpdate = true;
   }
   bloom.strength = 0.85 + wk * .3 + flash.material.opacity * .8;
+  // ease the grade toward the current chapter's look
+  { let ci = 0; CHAPTERS.forEach((c, i) => { if (prog >= c.p - 0.02) ci = i; });
+    const G = GRADES[ci], k = 0.03, gu = grade.uniforms;
+    gu.uLift.value.lerp(tmp.set(...G.lift), k); gu.uGain.value.lerp(tmp.set(...G.gain), k);
+    gu.uShadow.value.lerp(tmp.set(...G.sh), k); gu.uHigh.value.lerp(tmp.set(...G.hi), k);
+    gu.uSat.value = lerp(gu.uSat.value, G.sat, k); gu.uCon.value = lerp(gu.uCon.value, G.con, k); gu.uExp.value = lerp(gu.uExp.value, G.exp + flash.material.opacity * .5, .2);
+    gu.uAb.value = 1.2 + Math.min(1, speed * 3) * 3.5; gu.uTime.value = t; gu.uEdge.value = 1 + Math.min(1, speed * 3); }
   Sound.update(prog, speed, rainOn, lastChap, inSys);
   // world arrivals and constellation stars get their own notes
   const world = PROJECTS.findIndex((_, i) => prog > P0 + i * PSTEP + 0.006 && prog < P0 + (i + 1) * PSTEP - 0.012);
@@ -918,10 +981,21 @@ function frame(now) {
 }
 
 
-/* ═════════ sound: generated live with Web Audio, no files ═════════ */
+/* ═════════ sound: a slow, swelling organ score, generated live (no files) ═════════
+   Sustained pipe-organ chords in A minor that change every ~10 s, a sub-bass floor,
+   solar wind, and a crescendo tied to how fast you fly. No plucks, no pulses. */
 const Sound = (() => {
-  let ac = null, master, revIn, noiseBuf, on = false, n = {};
+  let ac = null, master, revIn, noiseBuf, on = false, n = {}, voices = {};
+  let mode = 'space', idx = -1, nextChange = 0, inten = 0, chapterNow = 0, bump = 0;
   const AC = window.AudioContext || window.webkitAudioContext;
+  const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  // Am(add9) → Fmaj7 → C/E → Gsus: common tones C and E hang over every change
+  const PROG = {
+    space: [[33, 45, 52, 57, 60, 64, 71], [29, 41, 48, 57, 60, 64, 69], [28, 40, 48, 55, 60, 64, 67], [31, 43, 50, 55, 60, 62, 67]],
+    city: [[28, 40, 47, 52, 55, 59], [24, 36, 43, 52, 55, 60], [26, 38, 45, 53, 57, 62], [23, 35, 47, 54, 59, 62]],
+    signal: [[21, 33, 45, 52, 57, 60, 64, 69, 72, 76]],
+  };
+  const HIGH = [76, 79, 81];
   function impulse(sec, decay) {
     const len = ac.sampleRate * sec, b = ac.createBuffer(2, len, ac.sampleRate);
     for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
@@ -931,79 +1005,91 @@ const Sound = (() => {
   const filt = (type, f, q = .7) => { const b = ac.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; };
   const noise = () => { const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true; s.start(0, Math.random() * 2); return s; };
   const lfo = (rate, depth, param) => { const o = ac.createOscillator(); o.frequency.value = rate; const g = gain(depth); o.connect(g); g.connect(param); o.start(); return o; };
+  const set = (p, v, tc = .4) => p.setTargetAtTime(v, ac.currentTime, tc);
+  function voice(m) {
+    // a pipe: fundamental plus a few drawbar harmonics, each doubled a few cents apart for air
+    const g = gain(0, n.organ), f = mtof(m);
+    const bars = m < 40 ? [[1, 1], [2, .3]] : [[1, 1], [2, .45], [3, .14], [4, .08], [6, .03]];
+    bars.forEach(([h, v]) => [-4, 3].forEach(ct => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f * h; o.detune.value = ct + (Math.random() - .5) * 2; o.connect(gain(v * .5, g)); o.start(); }));
+    voices[m] = g;
+  }
   function build() {
     ac = new AC();
-    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3; comp.connect(ac.destination);
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -20; comp.ratio.value = 2.5; comp.attack.value = .2; comp.release.value = 1; comp.connect(ac.destination);
     master = gain(0, comp);
-    const rev = ac.createConvolver(); rev.buffer = impulse(5, 2.6); revIn = gain(1); revIn.connect(rev); rev.connect(gain(.55, master));
+    const rev = ac.createConvolver(); rev.buffer = impulse(7.5, 2.2); revIn = gain(1); revIn.connect(rev); rev.connect(gain(.8, master));
     noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const nd = noiseBuf.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
 
-    // the deep-space drone: detuned low saws through a slow, breathing low-pass
-    const lp = filt('lowpass', 320, 1.2); n.drone = gain(.0, master); lp.connect(n.drone); n.drone.connect(revIn);
-    [[55, 'sawtooth', .16], [55.35, 'sawtooth', .16], [82.4, 'sine', .14], [110.1, 'triangle', .07], [27.5, 'sine', .22]].forEach(([f, t, v]) => { const o = ac.createOscillator(); o.type = t; o.frequency.value = f; o.connect(gain(v, lp)); o.start(); });
-    lfo(.045, 160, lp.frequency); n.lp = lp;
-    // a high shimmer pad, like starlight
-    n.pad = gain(0, revIn);
-    [659.25, 987.77, 1318.5].forEach((f, i) => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = gain(.025, n.pad); lfo(.07 + i * .05, .022, g.gain); o.connect(g); o.start(); });
+    // organ bus: every pipe → a slowly breathing low-pass → dry + a cathedral-sized reverb
+    n.organ = gain(1); n.olp = filt('lowpass', 900, .5); n.bus = gain(0);
+    n.organ.connect(n.olp); n.olp.connect(n.bus); n.bus.connect(gain(.45, master)); n.bus.connect(revIn);
+    lfo(.03, 140, n.olp.frequency);
+    const all = new Set([...Object.values(PROG).flat(2), ...HIGH]); all.forEach(voice);
+    // the air in the pipes
+    const br = noise(), bbp = filt('bandpass', 1400, .4); n.breath = gain(0, n.bus); br.connect(bbp); bbp.connect(n.breath);
     // solar wind
-    const wind = noise(), wbp = filt('bandpass', 500, .5); n.wind = gain(0, master); wind.connect(wbp); wbp.connect(n.wind); n.wind.connect(revIn); lfo(.08, 300, wbp.frequency);
-    // scroll whoosh
-    const wh = noise(); n.whF = filt('bandpass', 400, 1.4); n.whoosh = gain(0, master); wh.connect(n.whF); n.whF.connect(n.whoosh); n.whoosh.connect(revIn);
-    // city rain: hiss plus a low rumble
-    const rn = noise(), rhp = filt('highpass', 2200, .3), rlp = filt('lowpass', 9000); n.rain = gain(0, master); rn.connect(rhp); rhp.connect(rlp); rlp.connect(n.rain);
-    const rr = noise(), rrl = filt('lowpass', 180); n.rumble = gain(0, master); rr.connect(rrl); rrl.connect(n.rumble);
+    const w = noise(), wlp = filt('lowpass', 650, .4); n.wind = gain(0, master); w.connect(wlp); wlp.connect(n.wind); n.wind.connect(revIn); lfo(.05, 250, wlp.frequency); lfo(.07, .02, n.wind.gain);
+    // flight: a soft rush of air that follows scroll speed
+    const wh = noise(); n.whF = filt('lowpass', 400, .5); n.whoosh = gain(0, master); wh.connect(n.whF); n.whF.connect(n.whoosh); n.whoosh.connect(revIn);
+    // city rain and distant traffic rumble
+    const rn = noise(), rhp = filt('highpass', 1800, .3), rlp = filt('lowpass', 8000); n.rain = gain(0, master); rn.connect(rhp); rhp.connect(rlp); rlp.connect(n.rain);
+    const rr = noise(), rrl = filt('lowpass', 140); n.rumble = gain(0, master); rr.connect(rrl); rrl.connect(n.rumble);
   }
-  const set = (p, v, tc = .4) => p.setTargetAtTime(v, ac.currentTime, tc);
+  function chord(list, tc) {
+    Object.entries(voices).forEach(([m, g]) => {
+      m = +m; const inChord = list.includes(m);
+      const lvl = m < 36 ? .16 : m < 48 ? .12 : m < 66 ? .085 : .045;
+      set(g.gain, inChord ? lvl : 0, tc);
+    });
+  }
   return {
     get on() { return on; },
     async enable(v) {
       if (!AC) return false;
       try { if (!ac) build(); if (ac.state !== 'running') await ac.resume(); } catch { return false; }
-      on = v; set(master.gain, v ? .9 : 0, v ? .8 : .25);
+      on = v; set(master.gain, v ? 1 : 0, v ? 1.5 : .3);
+      if (v && idx < 0) { idx = 0; chord(PROG.space[0], 2.5); nextChange = ac.currentTime + 11; }
       return true;
     },
-    update(prog, vel, rainOn, chapter, inSystem) {
+    update(prog, vel, rainOn, chapter, inSys) {
       if (!ac || !on) return;
-      const space = 1 - rainOn;
-      set(n.drone.gain, .5 * (space * .9 + .1), 1.2);
-      set(n.pad.gain, (chapter === 2 || chapter === 4 ? 1 : .45) * space, 1.5);
-      set(n.wind.gain, .05 * space + inSystem * .03, 1);
-      set(n.lp.frequency, 260 + Math.min(1, vel * 3) * 900, .3);
-      const w = Math.min(1, Math.max(0, vel * 2.4 - .05));
-      set(n.whoosh.gain, w * .55, .12); set(n.whF.frequency, 300 + w * 1800, .15);
-      set(n.rain.gain, rainOn * .16, .8); set(n.rumble.gain, rainOn * .2, .8);
+      const now = ac.currentTime;
+      inten += (Math.min(1, vel * 2.6 + bump) - inten) * .04; bump *= .985;
+      const want = mode === 'signal' ? 'signal' : rainOn > .5 ? 'city' : 'space';
+      if (want !== mode || chapter !== chapterNow || now > nextChange) {
+        const swap = want !== mode; mode = want; chapterNow = chapter;
+        if (swap || now > nextChange) idx++;
+        const P = PROG[mode], c = P[idx % P.length].slice();
+        if (mode === 'space' && (chapter === 2 || chapter === 4)) c.push(HIGH[idx % HIGH.length]);
+        chord(c, swap ? 1.6 : 2.6); nextChange = now + (mode === 'signal' ? 1e6 : 10 + Math.random() * 3);
+      }
+      const sig = mode === 'signal';
+      set(n.bus.gain, (.55 + inten * .45) * (mode === 'city' ? .55 : 1) * (sig ? 1.35 : 1), .8);
+      set(n.olp.frequency, 650 + inten * 2400 + (chapter === 2 || chapter === 4 ? 350 : 0) + (sig ? 2600 : 0), .9);
+      set(n.breath.gain, .012 + inten * .02, 1);
+      set(n.wind.gain, .045 * (1 - rainOn) + inSys * .015, 1.2);
+      set(n.whoosh.gain, Math.min(1, vel * 2.4) * .16, .25); set(n.whF.frequency, 300 + Math.min(1, vel * 2.4) * 1400, .3);
+      set(n.rain.gain, rainOn * .13, 1); set(n.rumble.gain, rainOn * .16, 1);
     },
-    chime(k = 0) { // arriving at a world
-      if (!ac || !on) return; const t = ac.currentTime, base = [392, 440, 523.25, 587.33, 659.25, 783.99][k % 6];
-      [1, 2.01, 3.03, 4.2].forEach((m, i) => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = base * m; const g = gain(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.08 / (i + 1), t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + 3.5 - i * .6); o.connect(g); g.connect(revIn); g.connect(master); o.start(t); o.stop(t + 4); });
+    chime() { bump = Math.max(bump, .25); },   // arriving at a world lifts the organ a little
+    star() {},
+    whooshHit() { bump = Math.max(bump, .35); },
+    boom() { // the signal: the full chord opens up over a sub-bass swell
+      if (!ac || !on) return; mode = 'signal'; nextChange = 0;
+      const t = ac.currentTime, o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = 41.2;
+      const g = gain(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.35, t + 2.5); g.gain.setTargetAtTime(.12, t + 3, 3);
+      o.connect(g); g.connect(master); o.start(t); n.sub = g;
     },
-    star(k = 0) { // a constellation star lighting up
-      if (!ac || !on) return; const t = ac.currentTime, f = [523.25, 587.33, 659.25, 783.99, 880, 987.77, 1046.5, 1174.66][k % 8];
-      const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.value = f; const g = gain(0); g.gain.linearRampToValueAtTime(.05, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + 1.8); o.connect(g); g.connect(revIn); o.start(t); o.stop(t + 2);
-    },
-    boom() { // the signal switching on
-      if (!ac || !on) return; const t = ac.currentTime;
-      const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(32, t + 1.6);
-      const g = gain(0); g.gain.linearRampToValueAtTime(.7, t + .03); g.gain.exponentialRampToValueAtTime(.0001, t + 3); o.connect(g); g.connect(master); g.connect(revIn); o.start(t); o.stop(t + 3.2);
-      const s = noise(), lp = filt('lowpass', 1400); const ng = gain(0); ng.gain.linearRampToValueAtTime(.35, t + .01); ng.gain.exponentialRampToValueAtTime(.0001, t + 1.2); s.connect(lp); lp.connect(ng); ng.connect(revIn); s.stop(t + 1.5);
-      const hum = ac.createOscillator(); hum.type = 'sawtooth'; hum.frequency.value = 60; const hl = filt('lowpass', 220); const hg = gain(0); hg.gain.setValueAtTime(0, t + .5); hg.gain.linearRampToValueAtTime(.05, t + 2.5); hum.connect(hl); hl.connect(hg); hg.connect(master); hum.start(t); n.hum = hg;
-    },
-    humOff() { if (n.hum && ac) { set(n.hum.gain, 0, .4); n.hum = null; } },
+    humOff() { if (!ac) return; if (mode === 'signal') { mode = 'city'; nextChange = 0; } if (n.sub) { set(n.sub.gain, 0, 1); n.sub = null; } },
     thunder() {
-      if (!ac || !on) return; const t = ac.currentTime + .3 + Math.random() * .9;
-      const s = noise(), lp = filt('lowpass', 320); const g = gain(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.9, t + .08); g.gain.exponentialRampToValueAtTime(.3, t + .6); g.gain.exponentialRampToValueAtTime(.0001, t + 4);
-      lp.frequency.setValueAtTime(900, t); lp.frequency.exponentialRampToValueAtTime(120, t + 3); s.connect(lp); lp.connect(g); g.connect(master); g.connect(revIn); s.stop(t + 4.5);
+      if (!ac || !on) return; const t = ac.currentTime + .4 + Math.random() * 1.2;
+      const s = noise(), lp = filt('lowpass', 300); const g = gain(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.55, t + .25); g.gain.exponentialRampToValueAtTime(.2, t + 1.2); g.gain.exponentialRampToValueAtTime(.0001, t + 5);
+      lp.frequency.setValueAtTime(700, t); lp.frequency.exponentialRampToValueAtTime(90, t + 4); s.connect(lp); lp.connect(g); g.connect(master); g.connect(revIn); s.stop(t + 5.5);
     },
-    tick() {
-      if (!ac || !on) return; const t = ac.currentTime, o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = 2400; const g = gain(0); g.gain.linearRampToValueAtTime(.03, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + .08); o.connect(g); g.connect(master); o.start(t); o.stop(t + .1);
-    },
-    whooshHit() { // chapter change
-      if (!ac || !on) return; const t = ac.currentTime, s = noise(), bp = filt('bandpass', 200, 1.2); const g = gain(0);
-      bp.frequency.setValueAtTime(200, t); bp.frequency.exponentialRampToValueAtTime(2400, t + .9); g.gain.linearRampToValueAtTime(.22, t + .4); g.gain.exponentialRampToValueAtTime(.0001, t + 1.4);
-      s.connect(bp); bp.connect(g); g.connect(revIn); g.connect(master); s.stop(t + 1.6);
-    },
+    tick() {},
   };
 })();
+
 const sndBtn = $('#snd'), sndLbl = $('#sndlbl');
 function setSound(v) {
   Sound.enable(v).then(ok => {
@@ -1012,7 +1098,6 @@ function setSound(v) {
   });
 }
 sndBtn.onclick = () => setSound(!Sound.on);
-document.addEventListener('pointerover', e => { if (e.target.closest('a,button') && !e.target.closest('#loader')) Sound.tick(); });
 
 /* ═════════ loader ═════════ */
 const msgs = ['Aligning the telescope', 'Charting the galaxy', 'Spinning up six worlds', 'Connecting the dots', 'Warming up the signal'];
@@ -1037,7 +1122,7 @@ const tick = () => {
   else { $('#loader').classList.add('ready'); let pref = null; try { pref = localStorage.getItem('sg-sound'); } catch {} $(pref === '0' ? '#enterQuiet' : '#enterSound').focus({ preventScroll: true }); }
 };
 requestAnimationFrame(tick);
-const enter = withSound => { $('#loader').classList.add('done'); started = true; intro.t0 = performance.now(); if (withSound) setSound(true); setTimeout(() => withSound && Sound.whooshHit(), 200); };
+const enter = withSound => { $('#loader').classList.add('done'); document.body.classList.add('rolling'); started = true; intro.t0 = performance.now(); if (withSound) setSound(true); setTimeout(() => withSound && Sound.whooshHit(), 200); };
 $('#enterSound').onclick = () => enter(true);
 $('#enterQuiet').onclick = () => enter(false);
 })();
