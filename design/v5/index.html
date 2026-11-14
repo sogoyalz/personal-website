@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sourav Goyal, Mission Log</title>
+<title>Sourav Goyal · Software Engineer</title>
+<meta name="description" content="Sourav Goyal: software engineer and Computer Science student at Texas Tech. Projects, experience and contact.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -28,9 +29,10 @@
 }
 * { box-sizing: border-box; }
 html { background: var(--void); }
-body { margin: 0; background: var(--void); color: var(--star); font-family: var(--body); font-weight: 300; -webkit-font-smoothing: antialiased; overflow-x: hidden; cursor: none; }
+body { margin: 0; background: var(--void); color: var(--star); font-family: var(--body); font-weight: 300; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 @media (hover: none) { body { cursor: auto; } #cursor { display: none; } }
-a, button { cursor: none; color: inherit; }
+a, button { color: inherit; }
+#cursor { display: none; }
 :focus-visible { outline: 2px solid var(--signal); outline-offset: 4px; }
 .mono { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
 
@@ -40,12 +42,12 @@ a, button { cursor: none; color: inherit; }
 
 /* letterbox: widescreen bars that close in once you enter */
 .film { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
-.film::before, .film::after { content: ""; position: absolute; left: 0; right: 0; height: clamp(34px, 8.5vh, 84px); background: #000; transition: transform 2.4s cubic-bezier(.7,0,.2,1); }
+.film::before, .film::after { content: ""; position: absolute; left: 0; right: 0; height: clamp(26px, 6.5vh, 62px); background: #000; transition: transform 2.4s cubic-bezier(.7,0,.2,1); }
 .film::before { top: 0; transform: translateY(-100%); box-shadow: 0 18px 40px 10px rgba(0,0,0,.55); }
 .film::after { bottom: 0; transform: translateY(100%); box-shadow: 0 -18px 40px 10px rgba(0,0,0,.55); }
 body.rolling .film::before, body.rolling .film::after { transform: none; }
 .leak { position: fixed; inset: 0; pointer-events: none; z-index: 2; opacity: 0; mix-blend-mode: screen;
-  background: radial-gradient(60% 80% at 0% 40%, rgba(200,16,46,.55), transparent 70%), radial-gradient(40% 60% at 100% 70%, rgba(255,80,30,.25), transparent 70%); }
+  background: radial-gradient(60% 80% at 0% 40%, rgba(200,16,46,.3), transparent 70%), radial-gradient(40% 60% at 100% 70%, rgba(255,80,30,.12), transparent 70%); }
 .leak.go { animation: leak 2.2s ease-out; }
 @keyframes leak { 0% { opacity: 0; transform: translateX(-8%); } 18% { opacity: 1; } 100% { opacity: 0; transform: translateX(6%); } }
 
@@ -66,8 +68,53 @@ body.rolling .film::before, body.rolling .film::after { transform: none; }
 .dots button:hover span, .dots button:focus-visible span { opacity: 1; }
 @media (max-width: 760px) { .dots, .hud.bl { display: none; } }
 
+/* ── professional chrome ── */
+.who { display: grid; line-height: 1.25; }
+.who b { font-family: var(--display); font-stretch: 112%; font-weight: 600; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--star); }
+.who span { font-size: 12px; color: var(--dim); letter-spacing: .04em; }
+.topnav { pointer-events: auto; display: flex; align-items: center; gap: clamp(14px, 2.2vw, 30px); }
+.topnav a, .topnav button { font-family: var(--body); font-size: 13px; letter-spacing: .06em; color: #cfcfcf; text-decoration: none; background: none; border: 0; padding: 6px 0; cursor: pointer; position: relative; }
+.topnav a:not(.gh)::after { content: ""; position: absolute; left: 0; right: 100%; bottom: 0; height: 1px; background: var(--signal); transition: right .3s; }
+.topnav a:hover::after { right: 0; }
+.topnav a:hover, .topnav button:hover { color: #fff; }
+.topnav .qv-open { border: 1px solid rgba(255,255,255,.22); border-radius: 999px; padding: 7px 14px; transition: border-color .2s, background .2s; }
+.topnav .qv-open:hover { border-color: var(--signal); background: rgba(200,16,46,.15); }
+.topnav .gh { display: grid; place-items: center; }
+.hud.bl .chap { display: inline; font-size: 11px; margin-left: 8px; }
+@media (max-width: 860px) { .topnav a[data-jump] { display: none; } }
+.cta { display: flex; gap: 12px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+.cta a, .cta button { font-family: var(--body); font-size: 13px; letter-spacing: .08em; padding: 12px 22px; border-radius: 999px; text-decoration: none; cursor: pointer; border: 1px solid rgba(255,255,255,.25); background: rgba(5,5,5,.35); color: #fff; backdrop-filter: blur(8px); transition: background .2s, border-color .2s; }
+.cta .primary { background: var(--signal); border-color: var(--signal); }
+.cta a:hover, .cta button:hover { border-color: #fff; }
+
+#qv { position: fixed; inset: 0; z-index: 80; display: none; background: rgba(4,4,5,.86); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); overflow-y: auto; }
+#qv.open { display: block; animation: qvIn .35s ease; }
+@keyframes qvIn { from { opacity: 0; } }
+.qv-wrap { max-width: 1080px; margin: 0 auto; padding: clamp(28px, 6vh, 72px) var(--g) 80px; font-family: var(--body); font-weight: 400; color: #d6d6d6; }
+.qv-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 1px solid rgba(255,255,255,.1); padding-bottom: 28px; }
+.qv-top h2 { margin: 0; font-family: var(--display); font-stretch: 125%; font-weight: 300; text-transform: uppercase; letter-spacing: .2em; font-size: clamp(24px, 3vw, 38px); color: #fff; }
+.qv-top p { margin: 10px 0 0; max-width: 60ch; line-height: 1.6; }
+.qv-close { flex: none; background: none; border: 1px solid rgba(255,255,255,.25); color: #fff; border-radius: 999px; padding: 9px 16px; font: 13px var(--body); cursor: pointer; }
+.qv-close:hover { border-color: var(--signal); }
+.qv-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; font-size: 13px; }
+.qv-links a { color: #fff; text-decoration: none; border-bottom: 1px solid var(--signal); }
+.qv-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 48px; margin-top: 36px; }
+@media (max-width: 860px) { .qv-grid { grid-template-columns: 1fr; } }
+.qv-grid h3 { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--blood-hi); margin: 0 0 16px; }
+.qv-item { padding: 16px 0; border-top: 1px solid rgba(255,255,255,.08); }
+.qv-item:first-of-type { border-top: 0; padding-top: 0; }
+.qv-item .t { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+.qv-item b { color: #fff; font-weight: 600; font-size: 15px; }
+.qv-item .m { color: var(--dim); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.qv-item p { margin: 6px 0 0; font-size: 14px; line-height: 1.55; color: #bdbdbd; }
+.qv-item a { color: #fff; font-size: 13px; text-decoration: none; border-bottom: 1px solid rgba(200,16,46,.7); }
+.qv-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.qv-tags span { font-size: 11px; border: 1px solid rgba(255,255,255,.14); border-radius: 999px; padding: 3px 9px; color: #cfcfcf; }
+.qv-side section + section { margin-top: 40px; }
+
 /* ── beats: text that lives at a point in the film ── */
 .beat { position: fixed; z-index: 10; pointer-events: none; opacity: 0; will-change: opacity, transform, filter; }
+.contact-beat::before { inset: -45% -30% !important; background: radial-gradient(closest-side, rgba(3,3,4,.88), rgba(3,3,4,.55) 60%, rgba(3,3,4,0)) !important; }
 .center::before { content: ""; position: absolute; inset: -30% -12%; z-index: -1; background: radial-gradient(closest-side, rgba(2,3,6,.72), rgba(2,3,6,0)); filter: blur(24px); }
 .left:not(.proj)::before { content: ""; position: absolute; inset: -20% -30% -20% -40%; z-index: -1; background: radial-gradient(closest-side, rgba(2,3,8,.5), rgba(2,3,8,0)); filter: blur(30px); }
 .beat.live { pointer-events: auto; }
@@ -189,32 +236,76 @@ body.rolling .hero-name .l { animation: reveal 2.6s cubic-bezier(.2,.7,.1,1) bac
 
 <div id="loader" role="status">
   <div class="box">
-    <div class="pct" id="pct">00</div>
+    <div class="pct" id="pct">00</div><div class="mono" style="color:var(--dim);letter-spacing:.3em;margin-top:6px">Sourav Goyal · Software Engineer</div>
     <div class="bar"><i id="bar"></i></div>
     <div class="msg mono" id="msg">Aligning the telescope</div>
-    <div class="enter"><button class="primary" id="enterSound" type="button">Enter with sound</button><button id="enterQuiet" type="button">Enter in silence</button></div>
-    <div class="note mono">Best with headphones · scroll to fly</div>
+
   </div>
 </div>
 
 <!-- HUD -->
-<div class="hud tl"><a class="emblem" href="#top" aria-label="Back to start" id="home">SG</a><span class="mono" style="color:var(--star)">Sourav Goyal<br><span style="color:var(--dim)">Mission log · v5</span></span></div>
-<div class="hud tr mono"><span id="chapno">Chapter 01 / 06</span><span class="chap" id="chapname">Home</span></div>
-<div class="hud bl mono" id="telemetry">RA 00h 00m · DEC +00°<br>Velocity 0.00 c<br>Lubbock, TX · 33.58° N</div>
-<div class="hud br mono"><button class="snd" id="snd" type="button" aria-pressed="false"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="sndlbl">Sound off</span></button><span id="scrollhint">Scroll to launch</span>
+<header class="hud tl"><a class="emblem" href="#top" aria-label="Sourav Goyal, back to top" id="home">SG</a><span class="who"><b>Sourav Goyal</b><span>Software Engineer</span></span></header>
+<nav class="hud tr topnav" aria-label="Sections">
+  <a href="#work" data-jump="0.481">Work</a><a href="#about" data-jump="0.345">About</a><a href="#journey" data-jump="0.75">Experience</a><a href="#contact" data-jump="0.985">Contact</a>
+  <button class="qv-open" type="button" data-qv>Quick view</button>
+  <a class="gh" href="https://github.com/sogoyalz" aria-label="GitHub profile"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+</nav>
+<div class="hud bl mono"><span id="chapno">01 / 06</span> <span class="chap" id="chapname">Home</span></div>
+<div class="hud br mono"><button class="snd" id="snd" type="button" aria-pressed="false"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="sndlbl">Sound off</span></button><span id="scrollhint">Scroll to explore</span>
   <svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" stroke="rgba(255,255,255,.12)"/><circle id="ringp" cx="22" cy="22" r="20" stroke="#c8102e" stroke-dasharray="125.66" stroke-dashoffset="125.66" transform="rotate(-90 22 22)"/></svg>
 </div>
 <nav class="dots" id="dots" aria-label="Chapters"></nav>
 
 <div id="track"></div>
+<div id="qv" role="dialog" aria-modal="true" aria-labelledby="qv-title" aria-hidden="true">
+  <div class="qv-wrap">
+    <div class="qv-top">
+      <div>
+        <h2 id="qv-title">Sourav Goyal</h2>
+        <p>Software engineer and junior in Computer Science at Texas Tech University, with minors in AI and Mathematics. I build developer tools, browser extensions and full-stack apps. Open to Summer 2027 software engineering internships.</p>
+        <div class="qv-links"><a href="mailto:sourav00goyal@gmail.com">sourav00goyal@gmail.com</a><a href="https://github.com/sogoyalz">GitHub</a><a href="https://www.linkedin.com/in/sogoyalz/">LinkedIn</a><span style="color:var(--dim)">Lubbock, TX</span></div>
+      </div>
+      <button class="qv-close" type="button" id="qvClose">Close ✕</button>
+    </div>
+    <div class="qv-grid">
+      <section>
+        <h3>Selected projects</h3>
+        <div id="qv-projects"></div>
+      </section>
+      <div class="qv-side">
+        <section>
+          <h3>Experience</h3>
+          <div class="qv-item"><div class="t"><b>Undergraduate Grader, CS 2413</b><span class="m">Sep–Dec 2026</span></div><p>Texas Tech · Data Structures. Grading and office hours for about 55 students.</p></div>
+          <div class="qv-item"><div class="t"><b>Ecology research</b><span class="m">2026–now</span></div><p>Texas Tech · undergraduate research experience.</p></div>
+          <div class="qv-item"><div class="t"><b>LYFE &amp; Career Advancement Mentor</b><span class="m">2025–now</span></div><p>Mentoring engineering students one-on-one.</p></div>
+          <div class="qv-item"><div class="t"><b>Co-Founder, Probe (now Trace)</b><span class="m">Sep 2025–Feb 2026</span></div><p>Developer browser startup. Shipped the website and opened early access.</p></div>
+          <div class="qv-item"><div class="t"><b>Student Assistant → Supervisor, ATLC</b><span class="m">May 2025–Aug 2026</span></div><p>Technical support across Texas Tech computing labs; trained and scheduled the student team.</p></div>
+        </section>
+        <section>
+          <h3>Education</h3>
+          <div class="qv-item"><div class="t"><b>B.S. Computer Science, Texas Tech</b><span class="m">2024–2028</span></div><p>Minors in AI and Mathematics · 3.87 GPA · Dean’s Honor List · Honors College · first-generation.</p></div>
+        </section>
+        <section>
+          <h3>Skills</h3>
+          <div class="qv-tags"><span>TypeScript</span><span>JavaScript</span><span>Python</span><span>React</span><span>Next.js</span><span>FastAPI</span><span>SQLAlchemy</span><span>Three.js</span><span>PyTorch</span><span>Docker</span><span>Chrome MV3</span><span>IndexedDB</span><span>Git</span><span>Figma</span></div>
+        </section>
+        <section>
+          <h3>Open source</h3>
+          <div class="qv-item"><p>Hacktoberfest 2025 supercontributor with six merged pull requests, including Juno’s frontend.</p></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="starlabels" aria-hidden="false"></div>
 
 <!-- BEATS: data-a..data-d = fade in start, fully in, start fade out, gone (scroll progress 0..1) -->
 <section class="beat center hero" data-a="-1" data-b="0" data-c="0.055" data-d="0.085" id="top">
-  <div class="eyebrow mono">CS @ Texas Tech · Class of 2028</div>
+  <div class="eyebrow mono">Texas Tech · Computer Science · 2028</div>
   <h1 class="hero-name" aria-label="Sourav Goyal"><span class="row">Sourav Goyal</span></h1>
-  <p class="hero-sub">Software engineer. Almost an astronomer. Open to <b>Summer 2027 SWE internships</b>.</p>
-  <div class="launch mono"><i></i>Scroll to launch</div>
+  <p class="hero-sub">Software engineer and CS student at Texas Tech. I build developer tools, browser extensions and full-stack apps.<br><b>Open to Summer 2027 SWE internships.</b></p>
+  <div class="cta"><a class="primary" href="#work" data-jump="0.481">View my work</a><button type="button" data-qv>Quick view</button></div>
 </section>
 
 <section class="beat center" data-a="0.095" data-b="0.115" data-c="0.15" data-d="0.17">
@@ -235,7 +326,7 @@ body.rolling .hero-name .l { animation: reveal 2.6s cubic-bezier(.2,.7,.1,1) bac
 
 <section class="beat left" data-a="0.32" data-b="0.335" data-c="0.395" data-d="0.415">
   <div class="dossier">
-    <div class="mono" style="color:var(--signal)">Crew file · 001</div>
+    <div class="mono" style="color:var(--blood-hi);letter-spacing:.26em">About</div>
     <h2>The engineer behind the telescope</h2>
     <p>I’m a <b>junior in Computer Science</b> at Texas Tech’s Whitacre College of Engineering, with minors in <b>AI and Mathematics</b>. First-generation, Honors College, and an undergrad grader for <b>CS 2413 Data Structures</b>.</p>
     <p>Away from the editor: DC animated films, The Batman on repeat, and poetry in Urdu, Hindi and English.</p>
@@ -266,9 +357,9 @@ body.rolling .hero-name .l { animation: reveal 2.6s cubic-bezier(.2,.7,.1,1) bac
   <div class="mono" style="color:var(--blood-hi);letter-spacing:.3em">Chapter 06</div><h2 class="title-card">Every city needs a signal</h2><div class="rule"></div>
 </section>
 
-<section class="beat center" data-a="0.93" data-b="0.965" data-c="2" data-d="3" style="top:70%">
-  <div class="mono" style="color:var(--signal);margin-bottom:14px">Chapter 06 · Transmission open</div>
-  <h2 class="signal-title">Light it <span>up.</span></h2>
+<section class="beat center contact-beat" data-a="0.93" data-b="0.965" data-c="2" data-d="3" style="top:70%">
+  <div class="mono" style="color:var(--blood-hi);letter-spacing:.26em;margin-bottom:14px">Contact</div>
+  <h2 class="signal-title">Let’s <span>talk.</span></h2>
   <div class="contact-row">
     <a class="mail" href="mailto:sourav00goyal@gmail.com">sourav00goyal@gmail.com</a>
     <button class="btn" id="copy" type="button">Copy email</button>
@@ -280,7 +371,7 @@ body.rolling .hero-name .l { animation: reveal 2.6s cubic-bezier(.2,.7,.1,1) bac
     <a href="https://www.instagram.com/sogoyal_/">Instagram ↗</a>
     <a href="https://www.youtube.com/@souravbhagatzq/videos">YouTube ↗</a>
   </div>
-  <div class="sign-off mono">Lubbock, TX · Written in the dark by an almost-astronomer</div>
+  <div class="sign-off mono">© 2026 Sourav Goyal · Lubbock, TX</div>
 </section>
 
 <div class="nogl" id="nogl"><p class="mono">This page needs WebGL. Try a recent Chrome, Edge, Firefox or Safari.</p></div>
@@ -331,10 +422,10 @@ PROJECTS.forEach((p, i) => {
   el.className = 'beat left proj';
   Object.assign(el.dataset, { a: s - 0.004, b: s + 0.006, c: s + PSTEP - 0.012, d: s + PSTEP - 0.002 });
   el.innerHTML = `<div class="dossier">
-    <div class="idx mono"><span>World ${String(i + 1).padStart(2, '0')} / 06</span><span>${p.tag}</span></div>
+    <div class="idx mono"><span>Project ${String(i + 1).padStart(2, '0')} / 06</span><span>${p.tag}</span></div>
     <h2>${p.name}</h2><p>${p.desc}</p>
     <div class="tech mono">${p.tech.map(t => `<span>${t}</span>`).join('')}</div>
-    <a class="go" href="${p.href}">Land on this world ↗</a></div>`;
+    <a class="go" href="${p.href}">View repository ↗</a></div>`;
   pb.appendChild(el);
 });
 
@@ -360,6 +451,15 @@ CHAPTERS.forEach((c, i) => {
   dotsEl.appendChild(b);
 });
 $('#home').onclick = e => { e.preventDefault(); jumpTo(0); };
+document.querySelectorAll('[data-jump]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); closeQV(); jumpTo(+a.dataset.jump); }));
+const qv = $('#qv');
+$('#qv-projects').innerHTML = PROJECTS.map(p => `<div class="qv-item"><div class="t"><b>${p.name}</b><span class="m">${p.tag}</span></div><p>${p.desc}</p><div class="qv-tags">${p.tech.map(t => `<span>${t}</span>`).join('')}</div><p><a href="${p.href}">Repository ↗</a></p></div>`).join('');
+let qvReturn = null;
+function openQV() { qvReturn = document.activeElement; qv.classList.add('open'); qv.setAttribute('aria-hidden', 'false'); document.documentElement.style.overflow = 'hidden'; $('#qvClose').focus(); }
+function closeQV() { if (!qv.classList.contains('open')) return; qv.classList.remove('open'); qv.setAttribute('aria-hidden', 'true'); document.documentElement.style.overflow = ''; qvReturn && qvReturn.focus && qvReturn.focus({ preventScroll: true }); }
+document.querySelectorAll('[data-qv]').forEach(b => b.addEventListener('click', openQV));
+$('#qvClose').onclick = closeQV;
+addEventListener('keydown', e => { if (e.key === 'Escape') closeQV(); });
 function jumpTo(p) { const max = document.documentElement.scrollHeight - innerHeight; scrollTo({ top: p * max, behavior: 'smooth' }); }
 
 $('#copy').onclick = async () => {
@@ -462,7 +562,7 @@ const grade = new THREE.ShaderPass({
         float rn=rain(ru,170.,1.6,.06,90.,1.)*.35+rain(ru,90.,2.3,.09,60.,2.)*.55+rain(ru,38.,3.4,.14,30.,3.)*.8;
         col+=vec3(.78,.8,.86)*rn*uRain*.45; col=mix(col,col*.92+.015,uRain*.35); }
       // grain, stronger in the shadows like real film
-      float g=hash(uv*uRes+fract(uTime*7.)*91.)-.5; col+=g*.05*(1.2-l);
+      float g=hash(uv*uRes+fract(uTime*7.)*91.)-.5; col+=g*.03*(1.2-l);
       gl_FragColor=vec4(col,1.); }`
 });
 composer.addPass(grade);
@@ -894,7 +994,7 @@ function planetShot(i, which) {
   return { pos, look };
 }
 const keys = [
-  { p: 0.000, pos: () => V(0, -8, 80), look: () => V(0, -17, 0) },
+  { p: 0.000, pos: () => V(0, -8, 84), look: () => V(0, -21, 0) },
   { p: 0.060, pos: () => V(-6, -2, 70), look: () => V(-2, -14, 0) },
   { p: 0.115, pos: () => V(60, 40, 120), look: () => V(-10, -5, -60) },
   { p: 0.175, pos: () => V(-40, 90, -40), look: () => V(0, -40, -400) },
@@ -931,7 +1031,7 @@ const readScroll = () => { const max = document.documentElement.scrollHeight - i
 addEventListener('scroll', readScroll, { passive: true }); readScroll();
 const beats = [...document.querySelectorAll('.beat')].map(el => ({ el, a: +el.dataset.a, b: +el.dataset.b, c: +el.dataset.c, d: +el.dataset.d, left: el.classList.contains('left') }));
 const heroLetters = [...document.querySelectorAll('.hero-name .l')];
-const chapNo = $('#chapno'), chapName = $('#chapname'), tele = $('#telemetry'), ringp = $('#ringp'), hint = $('#scrollhint');
+const chapNo = $('#chapno'), chapName = $('#chapname'), ringp = $('#ringp'), hint = $('#scrollhint');
 const dotBtns = [...dotsEl.children];
 let lastChap = -1, cutDip = 0;
 function updateDom(p, t) {
@@ -959,9 +1059,9 @@ function updateDom(p, t) {
     l.style.opacity = (1 - out).toFixed(3);
   });
   let ci = 0; CHAPTERS.forEach((c, i) => { if (p >= c.p - 0.001) ci = i; });
-  if (ci !== lastChap) { if (lastChap >= 0) { Sound.whooshHit(); cutDip = 1; const L = $('#leak'); L.classList.remove('go'); void L.offsetWidth; if (!reduce) L.classList.add('go'); } lastChap = ci; chapNo.textContent = `Chapter ${String(ci + 1).padStart(2, '0')} / 06`; chapName.textContent = CHAPTERS[ci].name; dotBtns.forEach((b, i) => b.classList.toggle('on', i === ci)); }
+  if (ci !== lastChap) { if (lastChap >= 0) { Sound.whooshHit(); cutDip = 1; const L = $('#leak'); L.classList.remove('go'); void L.offsetWidth; if (!reduce) L.classList.add('go'); } lastChap = ci; chapNo.textContent = `${String(ci + 1).padStart(2, '0')} / 06`; chapName.textContent = CHAPTERS[ci].name; dotBtns.forEach((b, i) => b.classList.toggle('on', i === ci)); }
   ringp.setAttribute('stroke-dashoffset', (125.66 * (1 - p)).toFixed(2));
-  hint.textContent = p > 0.985 ? 'End of transmission' : p > 0.01 ? `${Math.round(p * 100)}% of the journey` : 'Scroll to launch';
+  hint.textContent = p > 0.985 ? 'Thanks for visiting' : p > 0.01 ? `${Math.round(p * 100)}%` : 'Scroll to explore';
 }
 
 /* ═════════ resize ═════════ */
@@ -981,7 +1081,6 @@ function frame(now) {
   requestAnimationFrame(frame);
   const t = now / 1000, dt = Math.min(.05, t - lastT || .016); lastT = t;
   U.uTime.value = t;
-  drawCursor();
   if (!started) return;
 
   prog = reduce ? target : lerp(prog, target, 0.075);
@@ -1086,7 +1185,7 @@ function frame(now) {
     gu.uLift.value.lerp(tmp.set(...G.lift), k); gu.uGain.value.lerp(tmp.set(...G.gain), k);
     gu.uShadow.value.lerp(tmp.set(...G.sh), k); gu.uHigh.value.lerp(tmp.set(...G.hi), k);
     gu.uSat.value = lerp(gu.uSat.value, G.sat, k); gu.uCon.value = lerp(gu.uCon.value, G.con, k); cutDip *= .94; gu.uExp.value = lerp(gu.uExp.value, (G.exp + flash.material.opacity * .5) * (1 - cutDip * .55), .25);
-    gu.uAb.value = 1.2 + Math.min(1, speed * 3) * 3.5; gu.uTime.value = t; gu.uEdge.value = 1 + Math.min(1, speed * 3); gu.uRain.value = lerp(gu.uRain.value, reduce ? 0 : (ci === 5 ? .9 : .6), .02); }
+    gu.uAb.value = .6 + Math.min(1, speed * 3) * 2; gu.uTime.value = t; gu.uEdge.value = 1 + Math.min(1, speed * 3); gu.uRain.value = lerp(gu.uRain.value, reduce ? 0 : (ci === 5 ? .7 : .4), .02); }
   Sound.update(prog, speed, rainOn, lastChap, inSys);
   // world arrivals and constellation stars get their own notes
   const world = PROJECTS.findIndex((_, i) => prog > P0 + i * PSTEP + 0.006 && prog < P0 + (i + 1) * PSTEP - 0.012);
@@ -1121,9 +1220,6 @@ function frame(now) {
   sun.visible = corona.visible = corona2.visible = belt.visible = prog > 0.36 && prog < 0.82;
   planetMeshes.forEach(m => m.visible = sun.visible);
 
-  // telemetry
-  const ra = ((prog * 24) % 24), dec = Math.round(Math.sin(prog * 6) * 60);
-  tele.innerHTML = `RA ${String(Math.floor(ra)).padStart(2, '0')}h ${String(Math.floor((ra % 1) * 60)).padStart(2, '0')}m · DEC ${dec >= 0 ? '+' : '−'}${String(Math.abs(dec)).padStart(2, '0')}°<br>Velocity ${(speed * 10).toFixed(2)} c<br>Lubbock, TX · 33.58° N`;
 
   updateDom(prog, t);
   composer.render();
@@ -1249,7 +1345,7 @@ function setSound(v) {
 sndBtn.onclick = () => setSound(!Sound.on);
 
 /* ═════════ loader ═════════ */
-const msgs = ['Aligning the telescope', 'Charting the galaxy', 'Spinning up six worlds', 'Connecting the dots', 'Warming up the signal'];
+const msgs = ['Loading'];
 const pct = $('#pct'), bar = $('#bar'), msg = $('#msg');
 let lp = 0; const L0 = performance.now();
 requestAnimationFrame(frame);
@@ -1266,15 +1362,13 @@ requestAnimationFrame(frame);
 // compile shaders while the counter runs
 renderer.compile(scene, camera);
 const tick = () => {
-  const k = clamp((performance.now() - L0) / (reduce ? 300 : 1900));
+  const k = clamp((performance.now() - L0) / (reduce ? 300 : 1100));
   lp = Math.round(smooth(k) * 100); pct.textContent = String(lp).padStart(2, '0'); bar.style.width = lp + '%'; msg.textContent = msgs[Math.min(msgs.length - 1, Math.floor(k * msgs.length))];
   if (k < 1) requestAnimationFrame(tick);
-  else { $('#loader').classList.add('ready'); let pref = null; try { pref = localStorage.getItem('sg-sound'); } catch {} $(pref === '0' ? '#enterQuiet' : '#enterSound').focus({ preventScroll: true }); }
+  else enter(false);
 };
 requestAnimationFrame(tick);
-const enter = withSound => { $('#loader').classList.add('done'); document.body.classList.add('rolling'); started = true; intro.t0 = performance.now(); if (withSound) setSound(true); setTimeout(() => withSound && Sound.whooshHit(), 200); };
-$('#enterSound').onclick = () => enter(true);
-$('#enterQuiet').onclick = () => enter(false);
+function enter(withSound) { $('#loader').classList.add('done'); document.body.classList.add('rolling'); started = true; intro.t0 = performance.now(); if (withSound) setSound(true); setTimeout(() => withSound && Sound.whooshHit(), 200); }
 })();
 </script>
 </body>
