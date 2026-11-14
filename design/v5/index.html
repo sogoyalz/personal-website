@@ -132,6 +132,22 @@ a, button { cursor: none; color: inherit; }
 #loader .bar { width: 220px; height: 1px; background: rgba(255,255,255,.12); margin: 18px auto 14px; overflow: hidden; }
 #loader .bar i { display: block; height: 100%; width: 0; background: var(--signal); box-shadow: 0 0 10px var(--signal); }
 #loader .msg { color: var(--dim); min-height: 1.2em; }
+#loader .enter { display: flex; gap: 12px; justify-content: center; margin-top: 30px; opacity: 0; transform: translateY(10px); transition: opacity .8s, transform .8s; pointer-events: none; }
+#loader.ready .enter { opacity: 1; transform: none; pointer-events: auto; }
+#loader.ready .bar, #loader.ready .msg { opacity: .35; }
+#loader .enter button { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; padding: 13px 20px; border-radius: 999px; border: 1px solid var(--signal); background: transparent; color: var(--signal); transition: background .3s, color .3s, box-shadow .3s; }
+#loader .enter button.primary { background: var(--signal); color: var(--void); }
+#loader .enter button:hover { box-shadow: 0 0 28px rgba(255,181,71,.55); }
+#loader .note { margin-top: 16px; color: var(--dim); opacity: 0; transition: opacity .8s .2s; }
+#loader.ready .note { opacity: 1; }
+.snd { pointer-events: auto; display: inline-flex; align-items: center; gap: 10px; background: transparent; border: 1px solid rgba(255,255,255,.14); color: var(--dim); border-radius: 999px; padding: 8px 12px; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; transition: border-color .3s, color .3s; }
+.snd:hover { border-color: var(--signal); color: var(--star); }
+.snd .eq { display: inline-flex; gap: 2px; align-items: flex-end; height: 12px; }
+.snd .eq i { width: 2px; height: 3px; background: currentColor; border-radius: 1px; transition: height .3s; }
+.snd.on { color: var(--signal); border-color: rgba(255,181,71,.5); }
+.snd.on .eq i { animation: eq 1s ease-in-out infinite; }
+.snd.on .eq i:nth-child(2) { animation-delay: -.3s; } .snd.on .eq i:nth-child(3) { animation-delay: -.6s; } .snd.on .eq i:nth-child(4) { animation-delay: -.15s; }
+@keyframes eq { 0%,100% { height: 3px; } 50% { height: 12px; } }
 
 .nogl { position: fixed; inset: 0; display: none; place-items: center; text-align: center; padding: 30px; z-index: 50; }
 
@@ -155,6 +171,8 @@ a, button { cursor: none; color: inherit; }
     <div class="pct" id="pct">00</div>
     <div class="bar"><i id="bar"></i></div>
     <div class="msg mono" id="msg">Aligning the telescope</div>
+    <div class="enter"><button class="primary" id="enterSound" type="button">Enter with sound</button><button id="enterQuiet" type="button">Enter in silence</button></div>
+    <div class="note mono">Best with headphones · scroll to fly</div>
   </div>
 </div>
 
@@ -162,7 +180,7 @@ a, button { cursor: none; color: inherit; }
 <div class="hud tl"><a class="emblem" href="#top" aria-label="Back to start" id="home">SG</a><span class="mono" style="color:var(--star)">Sourav Goyal<br><span style="color:var(--dim)">Mission log · v5</span></span></div>
 <div class="hud tr mono"><span id="chapno">Chapter 01 / 06</span><span class="chap" id="chapname">Home</span></div>
 <div class="hud bl mono" id="telemetry">RA 00h 00m · DEC +00°<br>Velocity 0.00 c<br>Lubbock, TX · 33.58° N</div>
-<div class="hud br mono"><span id="scrollhint">Scroll to launch</span>
+<div class="hud br mono"><button class="snd" id="snd" type="button" aria-pressed="false"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span id="sndlbl">Sound off</span></button><span id="scrollhint">Scroll to launch</span>
   <svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" stroke="rgba(255,255,255,.12)"/><circle id="ringp" cx="22" cy="22" r="20" stroke="#ffb547" stroke-dasharray="125.66" stroke-dashoffset="125.66" transform="rotate(-90 22 22)"/></svg>
 </div>
 <nav class="dots" id="dots" aria-label="Chapters"></nav>
@@ -740,7 +758,7 @@ function updateDom(p, t) {
     l.style.opacity = (1 - out).toFixed(3);
   });
   let ci = 0; CHAPTERS.forEach((c, i) => { if (p >= c.p - 0.001) ci = i; });
-  if (ci !== lastChap) { lastChap = ci; chapNo.textContent = `Chapter ${String(ci + 1).padStart(2, '0')} / 06`; chapName.textContent = CHAPTERS[ci].name; dotBtns.forEach((b, i) => b.classList.toggle('on', i === ci)); }
+  if (ci !== lastChap) { if (lastChap >= 0) Sound.whooshHit(); lastChap = ci; chapNo.textContent = `Chapter ${String(ci + 1).padStart(2, '0')} / 06`; chapName.textContent = CHAPTERS[ci].name; dotBtns.forEach((b, i) => b.classList.toggle('on', i === ci)); }
   ringp.setAttribute('stroke-dashoffset', (125.66 * (1 - p)).toFixed(2));
   hint.textContent = p > 0.985 ? 'End of transmission' : p > 0.01 ? `${Math.round(p * 100)}% of the journey` : 'Scroll to launch';
 }
@@ -757,7 +775,7 @@ resize(); addEventListener('resize', resize);
 const tmp = new THREE.Vector3(), tmp2 = new THREE.Vector3();
 const intro = { t0: 0, dur: reduce ? 1 : 3200 };
 const look = new THREE.Vector3();
-let started = false, lastT = 0, flashT = 0, nextFlash = 4;
+let started = false, lastT = 0, flashT = 0, nextFlash = 4, lastWorld = -1, lastStars = 0, lastSig = false;
 function frame(now) {
   requestAnimationFrame(frame);
   const t = now / 1000, dt = Math.min(.05, t - lastT || .016); lastT = t;
@@ -839,7 +857,7 @@ function frame(now) {
   }
   // lightning
   if (prog > 0.88 && !reduce) {
-    if (t > nextFlash) { flashT = t; nextFlash = t + 5 + Math.random() * 7; }
+    if (t > nextFlash) { flashT = t; nextFlash = t + 5 + Math.random() * 7; Sound.thunder(); }
     const ft = t - flashT, f = ft < .5 ? (ft < .06 ? 1 : ft < .12 ? .2 : ft < .2 ? .8 : Math.max(0, 1 - (ft - .2) * 3)) : 0;
     flash.material.opacity = f * .5;
   } else flash.material.opacity = 0;
@@ -857,6 +875,15 @@ function frame(now) {
     warpGeo.attributes.position.needsUpdate = true;
   }
   bloom.strength = 0.85 + wk * .3 + flash.material.opacity * .8;
+  Sound.update(prog, speed, rainOn, lastChap, inSys);
+  // world arrivals and constellation stars get their own notes
+  const world = PROJECTS.findIndex((_, i) => prog > P0 + i * PSTEP + 0.006 && prog < P0 + (i + 1) * PSTEP - 0.012);
+  if (world !== lastWorld) { if (world >= 0) Sound.chime(world); lastWorld = world; }
+  const litStars = prog > 0.72 ? Math.floor(segs + 1) : 0;
+  if (litStars > lastStars && litStars <= conPts.length) Sound.star(litStars - 1);
+  lastStars = litStars;
+  const sig = cityOn > 0.5;
+  if (sig !== lastSig) { sig ? Sound.boom() : Sound.humOff(); lastSig = sig; }
 
   // shooting stars
   shooters.forEach(sh => {
@@ -890,6 +917,103 @@ function frame(now) {
   composer.render();
 }
 
+
+/* ═════════ sound: generated live with Web Audio, no files ═════════ */
+const Sound = (() => {
+  let ac = null, master, revIn, noiseBuf, on = false, n = {};
+  const AC = window.AudioContext || window.webkitAudioContext;
+  function impulse(sec, decay) {
+    const len = ac.sampleRate * sec, b = ac.createBuffer(2, len, ac.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
+    return b;
+  }
+  const gain = (v, to) => { const g = ac.createGain(); g.gain.value = v; if (to) g.connect(to); return g; };
+  const filt = (type, f, q = .7) => { const b = ac.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; };
+  const noise = () => { const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true; s.start(0, Math.random() * 2); return s; };
+  const lfo = (rate, depth, param) => { const o = ac.createOscillator(); o.frequency.value = rate; const g = gain(depth); o.connect(g); g.connect(param); o.start(); return o; };
+  function build() {
+    ac = new AC();
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3; comp.connect(ac.destination);
+    master = gain(0, comp);
+    const rev = ac.createConvolver(); rev.buffer = impulse(5, 2.6); revIn = gain(1); revIn.connect(rev); rev.connect(gain(.55, master));
+    noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const nd = noiseBuf.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+
+    // the deep-space drone: detuned low saws through a slow, breathing low-pass
+    const lp = filt('lowpass', 320, 1.2); n.drone = gain(.0, master); lp.connect(n.drone); n.drone.connect(revIn);
+    [[55, 'sawtooth', .16], [55.35, 'sawtooth', .16], [82.4, 'sine', .14], [110.1, 'triangle', .07], [27.5, 'sine', .22]].forEach(([f, t, v]) => { const o = ac.createOscillator(); o.type = t; o.frequency.value = f; o.connect(gain(v, lp)); o.start(); });
+    lfo(.045, 160, lp.frequency); n.lp = lp;
+    // a high shimmer pad, like starlight
+    n.pad = gain(0, revIn);
+    [659.25, 987.77, 1318.5].forEach((f, i) => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = gain(.025, n.pad); lfo(.07 + i * .05, .022, g.gain); o.connect(g); o.start(); });
+    // solar wind
+    const wind = noise(), wbp = filt('bandpass', 500, .5); n.wind = gain(0, master); wind.connect(wbp); wbp.connect(n.wind); n.wind.connect(revIn); lfo(.08, 300, wbp.frequency);
+    // scroll whoosh
+    const wh = noise(); n.whF = filt('bandpass', 400, 1.4); n.whoosh = gain(0, master); wh.connect(n.whF); n.whF.connect(n.whoosh); n.whoosh.connect(revIn);
+    // city rain: hiss plus a low rumble
+    const rn = noise(), rhp = filt('highpass', 2200, .3), rlp = filt('lowpass', 9000); n.rain = gain(0, master); rn.connect(rhp); rhp.connect(rlp); rlp.connect(n.rain);
+    const rr = noise(), rrl = filt('lowpass', 180); n.rumble = gain(0, master); rr.connect(rrl); rrl.connect(n.rumble);
+  }
+  const set = (p, v, tc = .4) => p.setTargetAtTime(v, ac.currentTime, tc);
+  return {
+    get on() { return on; },
+    async enable(v) {
+      if (!AC) return false;
+      try { if (!ac) build(); if (ac.state !== 'running') await ac.resume(); } catch { return false; }
+      on = v; set(master.gain, v ? .9 : 0, v ? .8 : .25);
+      return true;
+    },
+    update(prog, vel, rainOn, chapter, inSystem) {
+      if (!ac || !on) return;
+      const space = 1 - rainOn;
+      set(n.drone.gain, .5 * (space * .9 + .1), 1.2);
+      set(n.pad.gain, (chapter === 2 || chapter === 4 ? 1 : .45) * space, 1.5);
+      set(n.wind.gain, .05 * space + inSystem * .03, 1);
+      set(n.lp.frequency, 260 + Math.min(1, vel * 3) * 900, .3);
+      const w = Math.min(1, Math.max(0, vel * 2.4 - .05));
+      set(n.whoosh.gain, w * .55, .12); set(n.whF.frequency, 300 + w * 1800, .15);
+      set(n.rain.gain, rainOn * .16, .8); set(n.rumble.gain, rainOn * .2, .8);
+    },
+    chime(k = 0) { // arriving at a world
+      if (!ac || !on) return; const t = ac.currentTime, base = [392, 440, 523.25, 587.33, 659.25, 783.99][k % 6];
+      [1, 2.01, 3.03, 4.2].forEach((m, i) => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = base * m; const g = gain(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.08 / (i + 1), t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + 3.5 - i * .6); o.connect(g); g.connect(revIn); g.connect(master); o.start(t); o.stop(t + 4); });
+    },
+    star(k = 0) { // a constellation star lighting up
+      if (!ac || !on) return; const t = ac.currentTime, f = [523.25, 587.33, 659.25, 783.99, 880, 987.77, 1046.5, 1174.66][k % 8];
+      const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.value = f; const g = gain(0); g.gain.linearRampToValueAtTime(.05, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + 1.8); o.connect(g); g.connect(revIn); o.start(t); o.stop(t + 2);
+    },
+    boom() { // the signal switching on
+      if (!ac || !on) return; const t = ac.currentTime;
+      const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(90, t); o.frequency.exponentialRampToValueAtTime(32, t + 1.6);
+      const g = gain(0); g.gain.linearRampToValueAtTime(.7, t + .03); g.gain.exponentialRampToValueAtTime(.0001, t + 3); o.connect(g); g.connect(master); g.connect(revIn); o.start(t); o.stop(t + 3.2);
+      const s = noise(), lp = filt('lowpass', 1400); const ng = gain(0); ng.gain.linearRampToValueAtTime(.35, t + .01); ng.gain.exponentialRampToValueAtTime(.0001, t + 1.2); s.connect(lp); lp.connect(ng); ng.connect(revIn); s.stop(t + 1.5);
+      const hum = ac.createOscillator(); hum.type = 'sawtooth'; hum.frequency.value = 60; const hl = filt('lowpass', 220); const hg = gain(0); hg.gain.setValueAtTime(0, t + .5); hg.gain.linearRampToValueAtTime(.05, t + 2.5); hum.connect(hl); hl.connect(hg); hg.connect(master); hum.start(t); n.hum = hg;
+    },
+    humOff() { if (n.hum && ac) { set(n.hum.gain, 0, .4); n.hum = null; } },
+    thunder() {
+      if (!ac || !on) return; const t = ac.currentTime + .3 + Math.random() * .9;
+      const s = noise(), lp = filt('lowpass', 320); const g = gain(0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.9, t + .08); g.gain.exponentialRampToValueAtTime(.3, t + .6); g.gain.exponentialRampToValueAtTime(.0001, t + 4);
+      lp.frequency.setValueAtTime(900, t); lp.frequency.exponentialRampToValueAtTime(120, t + 3); s.connect(lp); lp.connect(g); g.connect(master); g.connect(revIn); s.stop(t + 4.5);
+    },
+    tick() {
+      if (!ac || !on) return; const t = ac.currentTime, o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = 2400; const g = gain(0); g.gain.linearRampToValueAtTime(.03, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + .08); o.connect(g); g.connect(master); o.start(t); o.stop(t + .1);
+    },
+    whooshHit() { // chapter change
+      if (!ac || !on) return; const t = ac.currentTime, s = noise(), bp = filt('bandpass', 200, 1.2); const g = gain(0);
+      bp.frequency.setValueAtTime(200, t); bp.frequency.exponentialRampToValueAtTime(2400, t + .9); g.gain.linearRampToValueAtTime(.22, t + .4); g.gain.exponentialRampToValueAtTime(.0001, t + 1.4);
+      s.connect(bp); bp.connect(g); g.connect(revIn); g.connect(master); s.stop(t + 1.6);
+    },
+  };
+})();
+const sndBtn = $('#snd'), sndLbl = $('#sndlbl');
+function setSound(v) {
+  Sound.enable(v).then(ok => {
+    const live = ok && v; sndBtn.classList.toggle('on', live); sndBtn.setAttribute('aria-pressed', String(live)); sndLbl.textContent = live ? 'Sound on' : 'Sound off';
+    try { localStorage.setItem('sg-sound', live ? '1' : '0'); } catch {}
+  });
+}
+sndBtn.onclick = () => setSound(!Sound.on);
+document.addEventListener('pointerover', e => { if (e.target.closest('a,button') && !e.target.closest('#loader')) Sound.tick(); });
+
 /* ═════════ loader ═════════ */
 const msgs = ['Aligning the telescope', 'Charting the galaxy', 'Spinning up six worlds', 'Connecting the dots', 'Warming up the signal'];
 const pct = $('#pct'), bar = $('#bar'), msg = $('#msg');
@@ -910,9 +1034,12 @@ const tick = () => {
   const k = clamp((performance.now() - L0) / (reduce ? 300 : 1900));
   lp = Math.round(smooth(k) * 100); pct.textContent = String(lp).padStart(2, '0'); bar.style.width = lp + '%'; msg.textContent = msgs[Math.min(msgs.length - 1, Math.floor(k * msgs.length))];
   if (k < 1) requestAnimationFrame(tick);
-  else { $('#loader').classList.add('done'); started = true; intro.t0 = performance.now(); }
+  else { $('#loader').classList.add('ready'); let pref = null; try { pref = localStorage.getItem('sg-sound'); } catch {} $(pref === '0' ? '#enterQuiet' : '#enterSound').focus({ preventScroll: true }); }
 };
 requestAnimationFrame(tick);
+const enter = withSound => { $('#loader').classList.add('done'); started = true; intro.t0 = performance.now(); if (withSound) setSound(true); setTimeout(() => withSound && Sound.whooshHit(), 200); };
+$('#enterSound').onclick = () => enter(true);
+$('#enterQuiet').onclick = () => enter(false);
 })();
 </script>
 </body>
