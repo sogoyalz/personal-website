@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sourav Goyal v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@1,6..72,300;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a person drawn as a dependency graph. The hero is a live 3D graph
+   you can blast; everything below reads like a well-kept repo, left-aligned on a 12-col grid. */
+:root {
+  --void: #07080b;        /* page */
+  --panel: #0e1117;       /* raised surfaces */
+  --bone: #ece6da;        /* primary ink */
+  --ash: #8d929c;         /* secondary ink */
+  --wire: #2a3140;        /* rules, idle edges */
+  --blast: #ff5b2e;       /* the one loud color: blast radius */
+  --font-display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-verse: "Newsreader", Georgia, serif;
+  --gutter: clamp(16px, 4vw, 56px);
+  --max: 1320px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--void); color: var(--bone); }
+body { font-family: var(--font-body); font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--blast); outline-offset: 3px; border-radius: 2px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+.mono { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; }
+.wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+/* grain over everything, very faint */
+body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 100; opacity: 0.06;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.9'/></svg>");
+}
+
+/* ── nav ── */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; }
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; }
+.nav::before { content: ""; position: absolute; inset: 0; background: linear-gradient(var(--void), transparent); pointer-events: none; }
+.logo { position: relative; font-family: var(--font-mono); font-size: 13px; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+.logo b { display: inline-grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--wire); border-radius: 50%; font-weight: 500; }
+.nav ul { position: relative; display: flex; gap: clamp(12px, 2.4vw, 32px); list-style: none; margin: 0; padding: 0; }
+.nav ul a { font-family: var(--font-mono); font-size: 12px; text-decoration: none; color: var(--ash); transition: color .2s; }
+.nav ul a:hover { color: var(--bone); }
+.nav ul a span { color: var(--blast); }
+.progress { position: fixed; top: 0; left: 0; height: 2px; width: 100%; background: var(--blast); transform-origin: 0 50%; transform: scaleX(0); z-index: 60; }
+@media (max-width: 720px) { .nav ul li:nth-child(n+3) { display: none; } }
+
+/* ── hero ── */
+.hero { position: relative; height: clamp(620px, 92vh, 900px); overflow: hidden; isolation: isolate; }
+#graph { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: pan-y; }
+#graph.dragging { cursor: grabbing; }
+#graph.pointing { cursor: pointer; }
+.labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.lbl { position: absolute; left: 0; top: 0; font-family: var(--font-mono); font-size: 11px; color: var(--ash); white-space: nowrap; transform: translate(-50%, -50%); will-change: transform, opacity; transition: color .3s; }
+.lbl.hub { color: var(--bone); font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; }
+.lbl.hot { color: var(--blast); }
+.hero-copy { position: absolute; left: 0; right: 0; bottom: clamp(28px, 6vh, 64px); pointer-events: none; }
+.hero-copy .wrap { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; align-items: end; }
+.hero-text { grid-column: 1 / span 8; pointer-events: auto; }
+.status { display: inline-flex; align-items: center; gap: 10px; color: var(--ash); }
+.status i { width: 7px; height: 7px; border-radius: 50%; background: var(--blast); box-shadow: 0 0 0 0 rgba(255,91,46,.6); animation: ping 2.4s infinite; }
+@keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(255,91,46,.55); } 70%,100% { box-shadow: 0 0 0 10px rgba(255,91,46,0); } }
+.name { font-size: clamp(64px, 12.5vw, 196px); line-height: .84; letter-spacing: -0.035em; margin: 18px 0 22px; font-variation-settings: "wdth" 100, "opsz" 96; font-weight: 700; }
+.name .ch { display: inline-block; font-variation-settings: "wdth" var(--w, 100), "opsz" 96; font-weight: var(--g, 700); transition: font-variation-settings .5s cubic-bezier(.2,.8,.2,1), font-weight .5s cubic-bezier(.2,.8,.2,1), color .3s; }
+.name .ch:hover { --w: 75; --g: 200; color: var(--blast); }
+.name .row2 { display: block; padding-left: clamp(0px, 9vw, 160px); }
+.lede { max-width: 54ch; color: var(--ash); font-size: clamp(16px, 1.35vw, 19px); margin: 0; }
+.lede b { color: var(--bone); font-weight: 500; }
+.hint { margin-top: 18px; color: var(--ash); display: flex; gap: 18px; flex-wrap: wrap; }
+.hint kbd { font-family: var(--font-mono); border: 1px solid var(--wire); border-radius: 4px; padding: 1px 6px; color: var(--bone); }
+
+/* inspector panel, top-right of hero */
+.inspector { position: absolute; top: 88px; right: var(--gutter); width: min(340px, calc(100% - 2 * var(--gutter))); background: rgba(14,17,23,.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--wire); border-radius: 10px; padding: 18px 18px 16px; z-index: 5; }
+.inspector .top { display: flex; justify-content: space-between; color: var(--ash); }
+.inspector h3 { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; margin: 10px 0 6px; font-variation-settings: "wdth" 88; }
+.inspector p { margin: 0; color: var(--ash); font-size: 14px; line-height: 1.5; }
+.meter { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin: 14px 0 12px; background: var(--wire); border: 1px solid var(--wire); border-radius: 6px; overflow: hidden; }
+.meter div { background: var(--panel); padding: 8px 10px; }
+.meter b { display: block; font-family: var(--font-display); font-size: 26px; font-weight: 600; color: var(--blast); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.meter span { color: var(--ash); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--wire); background: transparent; color: var(--bone); padding: 4px 8px; border-radius: 999px; cursor: pointer; transition: border-color .2s, color .2s; }
+.chip:hover { border-color: var(--blast); color: var(--blast); }
+@media (max-width: 900px) {
+  .inspector { top: auto; bottom: 16px; right: var(--gutter); }
+  .hero-copy { bottom: auto; top: 96px; }
+  .hero-text { grid-column: 1 / -1; }
+  .hint { display: none; }
+  .lede { display: none; }
+}
+
+/* ── generic section ── */
+section.block { padding: clamp(80px, 12vw, 160px) 0 0; position: relative; }
+.sec-head { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; align-items: end; margin-bottom: clamp(36px, 5vw, 64px); }
+.sec-head .idx { grid-column: 1 / span 2; color: var(--ash); }
+.sec-head h2 { grid-column: 3 / span 7; font-size: clamp(40px, 6.4vw, 96px); line-height: .92; font-weight: 700; letter-spacing: -0.03em; font-variation-settings: "wdth" 82, "opsz" 96; }
+.sec-head h2 em { font-style: normal; color: var(--blast); }
+.sec-head p { grid-column: 10 / span 3; margin: 0; color: var(--ash); font-size: 15px; }
+@media (max-width: 900px) { .sec-head > * { grid-column: 1 / -1 !important; } }
+
+/* stats ticker */
+.ticker { border-top: 1px solid var(--wire); border-bottom: 1px solid var(--wire); overflow: hidden; }
+.ticker .row { display: grid; grid-template-columns: repeat(4, 1fr); }
+.ticker .cell { padding: 26px var(--gutter) 22px; border-right: 1px solid var(--wire); }
+.ticker .cell:last-child { border-right: 0; }
+.ticker b { display: block; font-family: var(--font-display); font-size: clamp(36px, 5vw, 64px); font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1; font-variation-settings: "wdth" 80; }
+.ticker span { color: var(--ash); }
+@media (max-width: 720px) { .ticker .row { grid-template-columns: 1fr 1fr; } .ticker .cell:nth-child(2) { border-right: 0; } .ticker .cell:nth-child(-n+2) { border-bottom: 1px solid var(--wire); } }
+
+/* ── work ── */
+.work { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; }
+.proj { grid-column: span 6; perspective: 1200px; text-decoration: none; }
+.proj.wide { grid-column: span 12; }
+.proj .card { position: relative; border: 1px solid var(--wire); border-radius: 14px; background: var(--panel); overflow: hidden; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2,.8,.2,1), border-color .3s; height: 100%; display: flex; flex-direction: column; }
+.proj:hover .card { border-color: #3c4558; }
+.proj .art { position: relative; aspect-ratio: 16 / 9; border-bottom: 1px solid var(--wire); background: radial-gradient(120% 90% at 30% 20%, #121722, #0a0c11); }
+.proj.wide .art { aspect-ratio: 21 / 8; }
+.proj canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.proj .glare { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.07), transparent 60%); opacity: 0; transition: opacity .3s; }
+.proj:hover .glare { opacity: 1; }
+.proj .body { padding: 22px 24px 24px; display: grid; gap: 10px; flex: 1; }
+.proj .meta { display: flex; justify-content: space-between; color: var(--ash); gap: 12px; }
+.proj h3 { font-size: clamp(28px, 3vw, 40px); font-weight: 650; letter-spacing: -0.025em; line-height: 1; font-variation-settings: "wdth" 86; }
+.proj p { margin: 0; color: var(--ash); font-size: 15px; max-width: 62ch; }
+.proj .tech { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--bone); margin-top: auto; padding-top: 6px; }
+.proj .tech span::before { content: "▸ "; color: var(--blast); }
+.proj .go { position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--wire); display: grid; place-items: center; background: rgba(7,8,11,.6); transition: background .3s, transform .4s; z-index: 2; }
+.proj:hover .go { background: var(--blast); transform: rotate(-45deg); border-color: var(--blast); }
+@media (max-width: 900px) { .proj, .proj.wide { grid-column: 1 / -1; } .proj.wide .art { aspect-ratio: 16 / 9; } }
+
+/* ── journey as a git graph ── */
+.log { border-top: 1px solid var(--wire); }
+.commit { display: grid; grid-template-columns: 120px 180px 1fr; gap: 24px; padding: 28px 0; border-bottom: 1px solid var(--wire); position: relative; transition: background .3s; }
+.commit:hover { background: linear-gradient(90deg, rgba(255,91,46,.05), transparent 70%); }
+.lanes { position: relative; height: 100%; min-height: 60px; }
+.lanes svg { position: absolute; left: 0; top: -28px; height: calc(100% + 56px); width: 120px; overflow: visible; }
+.commit .when { color: var(--ash); padding-top: 4px; }
+.commit .branch { display: inline-block; margin-top: 8px; color: var(--blast); border: 1px solid rgba(255,91,46,.35); border-radius: 4px; padding: 1px 7px; }
+.commit h3 { font-size: clamp(22px, 2.3vw, 30px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; font-variation-settings: "wdth" 90; }
+.commit .org { color: var(--ash); margin: 4px 0 8px; font-size: 15px; }
+.commit p { margin: 0; max-width: 64ch; color: #b7b3aa; font-size: 15px; }
+@media (max-width: 720px) { .commit { grid-template-columns: 56px 1fr; } .commit .when { grid-column: 2; } .commit .what { grid-column: 2; } .lanes { grid-row: 1 / span 2; } .lanes svg { width: 56px; } }
+
+/* ── stack ── */
+.stack { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; align-items: start; }
+.code { grid-column: 1 / span 7; background: var(--panel); border: 1px solid var(--wire); border-radius: 14px; overflow: hidden; }
+.code .bar { display: flex; gap: 8px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--wire); color: var(--ash); }
+.code .bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--wire); }
+.code pre { margin: 0; padding: 20px 22px 24px; font-family: var(--font-mono); font-size: 13.5px; line-height: 1.75; overflow-x: auto; color: #b9b5ad; }
+.code .k { color: var(--bone); }
+.code .s { color: #f0a58b; }
+.code .c { color: #5d6575; }
+.code .ln { display: inline-block; width: 2.2em; color: #3b4352; user-select: none; }
+.code .dep { cursor: default; border-radius: 3px; transition: background .2s; }
+.code .dep:hover { background: rgba(255,91,46,.12); }
+.caps { grid-column: 9 / span 4; display: grid; gap: 0; border-top: 1px solid var(--wire); }
+.cap { padding: 18px 0; border-bottom: 1px solid var(--wire); }
+.cap h3 { font-size: 22px; font-weight: 600; letter-spacing: -0.015em; font-variation-settings: "wdth" 92; }
+.cap p { margin: 6px 0 0; color: var(--ash); font-size: 14.5px; }
+@media (max-width: 900px) { .code, .caps { grid-column: 1 / -1; } }
+
+/* ── verse interlude ── */
+.verse { padding: clamp(100px, 14vw, 200px) 0 0; }
+.verse blockquote { margin: 0; font-family: var(--font-verse); font-style: italic; font-weight: 300; font-size: clamp(34px, 5.4vw, 80px); line-height: 1.08; letter-spacing: -0.015em; max-width: 18ch; }
+.verse blockquote span { display: block; }
+.verse blockquote span:nth-child(2) { padding-left: 1.6em; color: var(--ash); }
+.verse figcaption { margin-top: 26px; color: var(--ash); }
+
+/* ── notes ── */
+.notes { border-top: 1px solid var(--wire); }
+.note { display: grid; grid-template-columns: 2fr 7fr 3fr; gap: 24px; padding: 26px 0; border-bottom: 1px solid var(--wire); align-items: baseline; text-decoration: none; position: relative; }
+.note h3 { font-size: clamp(22px, 2.6vw, 34px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; transition: transform .45s cubic-bezier(.2,.8,.2,1), color .3s; font-variation-settings: "wdth" 88; }
+.note:hover h3 { transform: translateX(14px); color: var(--blast); }
+.note .when, .note .read { color: var(--ash); }
+.note .read { text-align: right; }
+@media (max-width: 720px) { .note { grid-template-columns: 1fr; gap: 6px; } .note .read { text-align: left; } }
+
+/* ── contact ── */
+.contact { padding: clamp(100px, 14vw, 200px) 0 48px; }
+.big { font-size: clamp(64px, 14vw, 230px); font-weight: 800; line-height: .82; letter-spacing: -0.045em; font-variation-settings: "wdth" 75, "opsz" 96; margin: 0 0 40px; }
+.big .stop { color: var(--blast); }
+.contact-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; align-items: end; }
+.mail { grid-column: 1 / span 7; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.mail a { font-family: var(--font-display); font-size: clamp(22px, 3vw, 40px); font-weight: 500; letter-spacing: -0.02em; text-decoration: none; background: linear-gradient(var(--blast), var(--blast)) 0 100% / 0 2px no-repeat; transition: background-size .4s; }
+.mail a:hover { background-size: 100% 2px; }
+.btn { font-family: var(--font-mono); font-size: 12px; color: var(--void); background: var(--bone); border: 0; border-radius: 999px; padding: 10px 16px; cursor: pointer; transition: background .2s; }
+.btn:hover { background: var(--blast); }
+.socials { grid-column: 9 / span 4; display: flex; flex-wrap: wrap; gap: 8px 22px; justify-content: flex-end; }
+.socials a { font-family: var(--font-mono); font-size: 13px; color: var(--ash); text-decoration: none; }
+.socials a:hover { color: var(--bone); }
+footer { margin-top: 80px; padding-top: 22px; border-top: 1px solid var(--wire); display: flex; justify-content: space-between; color: var(--ash); gap: 16px; flex-wrap: wrap; }
+@media (max-width: 900px) { .mail, .socials { grid-column: 1 / -1; justify-content: flex-start; } }
+
+/* heading letters settle from narrow to full width when they enter view; always readable */
+.word { display: inline-block; white-space: nowrap; }
+.settle .ch { display: inline-block; transition: font-variation-settings .9s cubic-bezier(.2,.8,.2,1); transition-delay: calc(var(--i) * 22ms); }
+.settle.narrow .ch { font-variation-settings: "wdth" 75, "opsz" 96; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+
+<nav class="nav" aria-label="Primary">
+  <div class="wrap">
+    <a class="logo" href="#top"><b>sg</b><span>sourav goyal</span></a>
+    <ul>
+      <li><a href="#work"><span>01</span> work</a></li>
+      <li><a href="#journey"><span>02</span> journey</a></li>
+      <li><a href="#stack"><span>03</span> stack</a></li>
+      <li><a href="#notes"><span>04</span> notes</a></li>
+      <li><a href="#contact"><span>05</span> contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <canvas id="graph" aria-label="Interactive 3D graph of Sourav's projects, skills and experience"></canvas>
+  <div class="labels" id="labels" aria-hidden="true"></div>
+
+  <aside class="inspector" id="inspector" aria-live="polite">
+    <div class="top mono"><span id="i-kind">node · person</span><span>blast radius</span></div>
+    <h3 id="i-name">Sourav Goyal</h3>
+    <p id="i-desc">CS junior at Texas Tech. Everything on this page connects back here.</p>
+    <div class="meter">
+      <div><b id="i-reach">0</b><span class="mono">nodes reached</span></div>
+      <div><b id="i-hops">0</b><span class="mono">hops deep</span></div>
+    </div>
+    <div class="chips" id="i-links"></div>
+  </aside>
+
+  <div class="hero-copy">
+    <div class="wrap">
+      <div class="hero-text">
+        <div class="status mono"><i></i>CS junior @ Texas Tech · open to Summer 2027 SWE internships</div>
+        <h1 class="name" id="name" aria-label="Sourav Goyal"><span class="row1">Sourav</span><span class="row2">Goyal</span></h1>
+        <p class="lede">I build tools for the things I’m curious about: <b>how software connects</b>, <b>what our feeds repeat</b>, and <b>what to watch next</b>.</p>
+        <div class="hint mono"><span><kbd>drag</kbd> orbit the graph</span><span><kbd>click</kbd> trace a node’s blast radius</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="ticker">
+  <div class="row">
+    <div class="cell"><b data-count="3.87" data-dec="2">3.87</b><span class="mono">GPA · Dean’s Honor List</span></div>
+    <div class="cell"><b data-count="6">6</b><span class="mono">merged open-source PRs</span></div>
+    <div class="cell"><b data-count="55">55</b><span class="mono">CS 2413 students supported</span></div>
+    <div class="cell"><b data-count="2028">2028</b><span class="mono">expected graduation</span></div>
+  </div>
+</div>
+
+<main>
+<section class="block" id="work">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="idx mono">01 / selected work</div>
+      <h2 class="settle">Things I built to <em>answer a question</em></h2>
+      <p>Supply-chain graphs, a feed you can audit, and a better way to pick a movie.</p>
+    </div>
+    <div class="work">
+      <a class="proj wide" href="https://github.com/sogoyalz/hydra-blast-radius">
+        <div class="card">
+          <div class="art"><canvas data-art="hydra"></canvas><span class="go" aria-hidden="true">↗</span></div>
+          <div class="glare"></div>
+          <div class="body">
+            <div class="meta mono"><span>Hack Hydra 2026 · Track 2A</span><span>hackathon</span></div>
+            <h3>Hydra Blast Radius</h3>
+            <p>Maps npm dependencies and shared maintainer publish rights in HydraDB to show which packages a single compromise could reach. The hero graph on this page borrows its idea.</p>
+            <div class="tech mono"><span>JavaScript</span><span>HydraDB</span><span>Graph traversal</span><span>npm</span></div>
+          </div>
+        </div>
+      </a>
+      <a class="proj" href="https://github.com/sogoyalz/Doomscroll">
+        <div class="card">
+          <div class="art"><canvas data-art="doom"></canvas><span class="go" aria-hidden="true">↗</span></div>
+          <div class="glare"></div>
+          <div class="body">
+            <div class="meta mono"><span>Chrome extension</span><span>local-only</span></div>
+            <h3>Doomscroll</h3>
+            <p>Tracks watched Instagram Reels and flags repetitive content categories against your own baseline. Feed patterns never leave the device.</p>
+            <div class="tech mono"><span>TypeScript</span><span>React</span><span>Chrome MV3</span><span>IndexedDB</span></div>
+          </div>
+        </div>
+      </a>
+      <a class="proj" href="https://github.com/sogoyalz/ReelTogether">
+        <div class="card">
+          <div class="art"><canvas data-art="reel"></canvas><span class="go" aria-hidden="true">↗</span></div>
+          <div class="glare"></div>
+          <div class="body">
+            <div class="meta mono"><span>Full stack</span><span>compare up to 4 films</span></div>
+            <h3>ReelTogether</h3>
+            <p>Movie discovery with private watchlists, side-by-side comparisons and explainable genre-based recommendations.</p>
+            <div class="tech mono"><span>Next.js</span><span>TypeScript</span><span>FastAPI</span><span>SQLAlchemy</span></div>
+          </div>
+        </div>
+      </a>
+      <a class="proj" href="https://github.com/sogoyalz/get-probe">
+        <div class="card">
+          <div class="art"><canvas data-art="trace"></canvas><span class="go" aria-hidden="true">↗</span></div>
+          <div class="glare"></div>
+          <div class="body">
+            <div class="meta mono"><span>Co-founder · Sep 2025 – Feb 2026</span><span>startup</span></div>
+            <h3>Probe, now Trace</h3>
+            <p>A memory-augmented browser for developers that keeps context so engineers stay in flow. I shipped the live site and opened early access.</p>
+            <div class="tech mono"><span>Product</span><span>Web</span><span>AI</span><span>DevTools</span></div>
+          </div>
+        </div>
+      </a>
+      <a class="proj" href="https://github.com/garrgi11/neurosole">
+        <div class="card">
+          <div class="art"><canvas data-art="sole"></canvas><span class="go" aria-hidden="true">↗</span></div>
+          <div class="glare"></div>
+          <div class="body">
+            <div class="meta mono"><span>HackRice · team project</span><span>landing page</span></div>
+            <h3>NeuroSole</h3>
+            <p>Custom 3D insoles from foot scans, with interactive STL rendering and AI-assisted design. I built the landing page.</p>
+            <div class="tech mono"><span>React</span><span>Three.js</span><span>PyTorch</span><span>3D printing</span></div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="journey">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="idx mono">02 / git log --graph</div>
+      <h2 class="settle">The <em>commit history</em> so far</h2>
+      <p>Newest first. Parallel branches run at the same time, the way college actually works.</p>
+    </div>
+    <div class="log" id="log"></div>
+  </div>
+</section>
+
+<section class="block" id="stack">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="idx mono">03 / dependencies</div>
+      <h2 class="settle">What I <em>reach for</em></h2>
+      <p>Each dependency lists the projects where it actually shipped.</p>
+    </div>
+    <div class="stack">
+      <div class="code">
+        <div class="bar mono"><i></i><i></i><i></i><span style="margin-left:8px">sourav/package.json</span></div>
+        <pre id="pkg"></pre>
+      </div>
+      <div class="caps">
+        <div class="cap"><h3>Full-stack apps</h3><p>Typed Next.js frontends on Python APIs, with migrations and background jobs.</p></div>
+        <div class="cap"><h3>Graphs &amp; supply chains</h3><p>Modelling who can publish what, then walking the graph to see what breaks.</p></div>
+        <div class="cap"><h3>Browser extensions</h3><p>Manifest V3, local classification, IndexedDB and no server at all.</p></div>
+        <div class="cap"><h3>Teaching &amp; mentoring</h3><p>Grading Data Structures and mentoring engineering students through LYFE.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="verse">
+  <div class="wrap">
+    <figure style="margin:0">
+      <blockquote><span>There’s power in the mind,</span><span>a quiet, beautiful moon inside it.</span></blockquote>
+      <figcaption class="mono">from “It’s Dark, Not Because I Chose It”, a poem by Sourav · 2026</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="block" id="notes">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="idx mono">04 / notes</div>
+      <h2 class="settle">Written <em>down</em></h2>
+      <p>Hackathons, learning to code, and choosing depth.</p>
+    </div>
+    <div class="notes">
+      <a class="note" href="#notes"><span class="when mono">Oct 2025 · hackathon</span><h3>Building NeuroSole in 36 hours at HackRice</h3><span class="read mono">6 min read →</span></a>
+      <a class="note" href="#notes"><span class="when mono">Sep 2025 · engineering</span><h3>What no one tells you about learning to code</h3><span class="read mono">4 min read →</span></a>
+      <a class="note" href="#notes"><span class="when mono">Aug 2025 · cs life</span><h3>Choosing depth over breadth in your first year of CS</h3><span class="read mono">5 min read →</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="wrap">
+    <div class="idx mono" style="color:var(--ash);margin-bottom:28px">05 / contact</div>
+    <h2 class="big settle">Let’s build<br>something<span class="stop">.</span></h2>
+    <div class="contact-grid">
+      <div class="mail">
+        <a href="mailto:sourav00goyal@gmail.com">sourav00goyal@gmail.com</a>
+        <button class="btn" id="copy" type="button">copy email</button>
+      </div>
+      <div class="socials">
+        <a href="https://github.com/sogoyalz">GitHub ↗</a>
+        <a href="https://www.linkedin.com/in/sogoyalz/">LinkedIn ↗</a>
+        <a href="https://x.com/souravbhagat_4">X ↗</a>
+        <a href="https://www.instagram.com/sogoyal_/">Instagram ↗</a>
+        <a href="https://www.youtube.com/@souravbhagatzq/videos">YouTube ↗</a>
+      </div>
+    </div>
+    <footer class="mono"><span>Lubbock, TX · 33.58° N, 101.85° W</span><span>portfolio v4 · design prototype</span></footer>
+  </div>
+</section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const BLAST = [1, 0.357, 0.18];
+
+/* ───────────── split headings into letters ───────────── */
+function split(el) {
+  let i = 0;
+  const walk = node => {
+    [...node.childNodes].forEach(n => {
+      if (n.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(word => {
+          if (!word) return;
+          if (/^\s+$/.test(word)) { frag.appendChild(document.createTextNode(' ')); return; }
+          const wEl = document.createElement('span'); wEl.className = 'word';
+          for (const c of word) {
+            const s = document.createElement('span'); s.className = 'ch'; s.textContent = c; s.style.setProperty('--i', i++);
+            wEl.appendChild(s);
+          }
+          frag.appendChild(wEl);
+        });
+        n.replaceWith(frag);
+      } else if (n.nodeType === 1 && n.tagName !== 'BR') walk(n);
+    });
+  };
+  walk(el);
+}
+const nameEl = document.getElementById('name');
+split(nameEl);
+document.querySelectorAll('.settle').forEach(split);
+
+// hero name: letters arrive narrow and thin, then open up
+if (!reduce) {
+  const chs = nameEl.querySelectorAll('.ch');
+  chs.forEach(c => { c.style.setProperty('--w', 75); c.style.setProperty('--g', 200); });
+  setTimeout(() => chs.forEach((c, i) => setTimeout(() => { c.style.removeProperty('--w'); c.style.removeProperty('--g'); }, 380 + i * 70)), 60);
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add('narrow');
+    requestAnimationFrame(() => requestAnimationFrame(() => e.target.classList.remove('narrow')));
+    io.unobserve(e.target);
+  }), { threshold: 0.4 });
+  document.querySelectorAll('.settle').forEach(el => { if (el.getBoundingClientRect().top > innerHeight) io.observe(el); });
+}
+
+/* ───────────── scroll progress ───────────── */
+const prog = document.getElementById('progress');
+addEventListener('scroll', () => {
+  const max = document.documentElement.scrollHeight - innerHeight;
+  prog.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+}, { passive: true });
+
+/* ───────────── ticker count-up ───────────── */
+if (!reduce) {
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target, to = +el.dataset.count, dec = +(el.dataset.dec || 0), t0 = performance.now();
+    const step = now => {
+      const k = Math.min(1, (now - t0) / 1400), v = to * (1 - Math.pow(1 - k, 4));
+      el.textContent = v.toFixed(dec);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step); io.unobserve(el);
+  }), { threshold: 0.6 });
+  document.querySelectorAll('[data-count]').forEach(el => io.observe(el));
+}
+
+/* ───────────── journey: git graph ───────────── */
+const commits = [
+  { when: 'Sep – Dec 2026', branch: 'teaching', lane: 1, title: 'Undergraduate Grader, CS 2413 Data Structures', org: 'Texas Tech · Department of Computer Science', desc: 'Grade coursework, hold office hours and prepare assessment questions for about 55 students across lecture and lab sections.' },
+  { when: '2026 – now', branch: 'research', lane: 2, title: 'Ecology Research Experience', org: 'Texas Tech · Ecology Lab', desc: 'Undergraduate research in an ecology lab.' },
+  { when: '2025 – now', branch: 'mentoring', lane: 3, title: 'LYFE & Career Advancement Mentor', org: 'Texas Tech · Mentor Collective', desc: 'One-on-one guidance, academic support and action plans for underclassmen in engineering.' },
+  { when: 'Sep 2025 – Feb 2026', branch: 'startup', lane: 2, title: 'Co-Founder, Probe (now Trace)', org: 'Developer-first browser', desc: 'Shipped the live website and opened early access for a memory-augmented developer browser, then moved on in February 2026.' },
+  { when: 'May 2025 – Aug 2026', branch: 'atlc', lane: 1, title: 'Student Assistant → Student Supervisor', org: 'Texas Tech · Advanced Technology Learning Center', desc: 'Front-line technical support across the computing labs, then trained, scheduled and mentored the student assistant team.' },
+  { when: 'Aug 2024', branch: 'main', lane: 0, title: 'B.S. Computer Science begins', org: 'Texas Tech · Whitacre College of Engineering', desc: 'AI and Mathematics minors, Honors College, first-generation student. ACM, GDSC and TrUE Scholars. Graduating May 2028.' },
+];
+const laneX = l => 14 + l * 26;
+const log = document.getElementById('log');
+commits.forEach((c, i) => {
+  const row = document.createElement('div'); row.className = 'commit';
+  const isRoot = i === commits.length - 1;
+  // main runs through every row; each branch commit forks off main just below it
+  let paths = `<line x1="${laneX(0)}" y1="0" x2="${laneX(0)}" y2="${isRoot ? 50 : 100}" />`;
+  if (c.lane) paths += `<path d="M${laneX(c.lane)} 50 C ${laneX(c.lane)} 85, ${laneX(0)} 75, ${laneX(0)} 100" />`;
+  row.innerHTML = `
+    <div class="lanes"><svg viewBox="0 0 120 100" preserveAspectRatio="none" aria-hidden="true">
+      <g fill="none" stroke="#2a3140" stroke-width="1.5" vector-effect="non-scaling-stroke">${paths}</g>
+    </svg><span class="dot" style="position:absolute;left:${laneX(c.lane) - 7}px;top:8px;width:14px;height:14px;border-radius:50%;background:${c.lane === 0 ? 'var(--bone)' : 'var(--void)'};border:2px solid ${c.lane === 0 ? 'var(--bone)' : 'var(--blast)'}"></span></div>
+    <div class="when mono">${c.when}<br><span class="branch mono">${c.branch}</span></div>
+    <div class="what"><h3>${c.title}</h3><div class="org">${c.org}</div><p>${c.desc}</p></div>`;
+  log.appendChild(row);
+});
+// svg lines drawn in a 0..100 box need non-scaling strokes; position dot at 50% of the lanes box instead
+log.querySelectorAll('.lanes').forEach(l => { const d = l.querySelector('.dot'); d.style.top = 'calc(50% - 7px)'; });
+log.querySelectorAll('.lanes line, .lanes path').forEach(p => p.setAttribute('vector-effect', 'non-scaling-stroke'));
+
+/* ───────────── stack: package.json ───────────── */
+const deps = [
+  ['typescript', 'doomscroll, reeltogether'], ['python', 'reeltogether, movie-pulse'], ['react', 'doomscroll, neurosole'],
+  ['next', 'reeltogether, movie-pulse'], ['fastapi', 'reeltogether, movie-pulse'], ['sqlalchemy', 'reeltogether'],
+  ['three', 'neurosole'], ['pytorch', 'neurosole, ai-minor'], ['docker', 'movie-pulse'],
+];
+const devDeps = [['figma', 'design'], ['premiere-pro', 'video'], ['after-effects', 'motion'], ['poetry', 'urdu, hindi, english']];
+const lines = [];
+const kv = (k, v, last, cls = '') => `    <span class="dep ${cls}"><span class="s">"${k}"</span>: <span class="s">"${v}"</span></span>${last ? '' : ','}`;
+lines.push('{');
+lines.push(`  <span class="k">"name"</span>: <span class="s">"sourav-goyal"</span>,`);
+lines.push(`  <span class="k">"version"</span>: <span class="s">"4.0.0"</span>,`);
+lines.push(`  <span class="k">"description"</span>: <span class="s">"CS @ Texas Tech · AI + Math minors"</span>,`);
+lines.push(`  <span class="k">"dependencies"</span>: {`);
+deps.forEach((d, i) => lines.push(kv(d[0], d[1], i === deps.length - 1)));
+lines.push('  },');
+lines.push(`  <span class="k">"devDependencies"</span>: {`);
+devDeps.forEach((d, i) => lines.push(kv(d[0], d[1], i === devDeps.length - 1)));
+lines.push('  },');
+lines.push(`  <span class="k">"scripts"</span>: {`);
+lines.push(`    <span class="s">"grade"</span>: <span class="s">"cs-2413 --students 55"</span>,`);
+lines.push(`    <span class="s">"mentor"</span>: <span class="s">"lyfe && career-advancement"</span>,`);
+lines.push(`    <span class="s">"ship"</span>: <span class="s">"open-to summer-2027-swe"</span>`);
+lines.push('  }');
+lines.push('}');
+document.getElementById('pkg').innerHTML = lines.map((l, i) => `<span class="ln">${i + 1}</span>${l}`).join('\n');
+
+/* ───────────── copy email ───────────── */
+const copyBtn = document.getElementById('copy');
+copyBtn.addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText('sourav00goyal@gmail.com'); copyBtn.textContent = 'copied ✓'; }
+  catch { copyBtn.textContent = 'select the address to copy'; }
+  setTimeout(() => copyBtn.textContent = 'copy email', 2200);
+});
+
+/* ───────────── project cards: tilt + glare ───────────── */
+document.querySelectorAll('.proj').forEach(p => {
+  const card = p.querySelector('.card');
+  p.addEventListener('pointermove', e => {
+    const r = card.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    card.style.setProperty('--mx', x * 100 + '%'); card.style.setProperty('--my', y * 100 + '%');
+    p.querySelector('.glare').style.setProperty('--mx', x * 100 + '%'); p.querySelector('.glare').style.setProperty('--my', y * 100 + '%');
+    if (!reduce) card.style.transform = `rotateX(${(0.5 - y) * 5}deg) rotateY(${(x - 0.5) * 7}deg) translateZ(0)`;
+  });
+  p.addEventListener('pointerleave', () => card.style.transform = '');
+});
+
+/* ───────────── project art (2D canvas, one shared loop) ───────────── */
+const BL = '#ff5b2e', BONE = '#ece6da', ASH = '#8d929c', WIRE = '#2a3140';
+const rnd = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(7);
+const arts = {
+  hydra(ctx, w, h, t, st) {
+    if (!st.nodes) {
+      st.nodes = []; const n = 64;
+      for (let i = 0; i < n; i++) { const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()); st.nodes.push({ x: 0.5 + Math.cos(a) * r * 0.46, y: 0.5 + Math.sin(a) * r * 0.42, d: Infinity }); }
+      st.edges = [];
+      st.nodes.forEach((a, i) => { const near = st.nodes.map((b, j) => [j, (a.x - b.x) ** 2 + (a.y - b.y) ** 2]).filter(q => q[0] !== i).sort((p, q) => p[1] - q[1]).slice(0, 3); near.forEach(([j]) => st.edges.push([i, j])); });
+      const adj = st.nodes.map(() => []); st.edges.forEach(([a, b]) => { adj[a].push(b); adj[b].push(a); });
+      st.adj = adj;
+    }
+    const period = 6.5, ph = t % period, cycle = Math.floor(t / period);
+    if (st.cycle !== cycle) { // new compromise: BFS from a random package
+      st.cycle = cycle; const src = Math.floor(rnd() * st.nodes.length);
+      st.nodes.forEach(n => n.d = Infinity); st.nodes[src].d = 0; const q = [src];
+      while (q.length) { const a = q.shift(); st.adj[a].forEach(b => { if (st.nodes[b].d === Infinity) { st.nodes[b].d = st.nodes[a].d + 1; q.push(b); } }); }
+      st.src = src;
+    }
+    const front = ph * 2.2, fade = ph > period - 1 ? (period - ph) : 1;
+    const X = n => n.x * w, Y = n => n.y * h;
+    ctx.lineWidth = 1;
+    st.edges.forEach(([a, b]) => {
+      const A = st.nodes[a], B = st.nodes[b], hit = Math.max(A.d, B.d) <= front;
+      ctx.strokeStyle = hit ? `rgba(255,91,46,${0.55 * fade})` : WIRE;
+      ctx.beginPath(); ctx.moveTo(X(A), Y(A)); ctx.lineTo(X(B), Y(B)); ctx.stroke();
+    });
+    st.nodes.forEach((n, i) => {
+      const hit = n.d <= front, pulse = hit ? Math.max(0, 1 - (front - n.d)) : 0;
+      ctx.fillStyle = hit ? BL : ASH; ctx.globalAlpha = hit ? fade : 0.6;
+      ctx.beginPath(); ctx.arc(X(n), Y(n), (i === st.src ? 5 : 2.4) + pulse * 5, 0, 7); ctx.fill();
+      if (pulse > 0) { ctx.globalAlpha = pulse * 0.4 * fade; ctx.beginPath(); ctx.arc(X(n), Y(n), 4 + (1 - pulse) * 18, 0, 7); ctx.strokeStyle = BL; ctx.stroke(); }
+      ctx.globalAlpha = 1;
+    });
+    const reached = st.nodes.filter(n => n.d <= front).length;
+    ctx.font = '500 12px "JetBrains Mono", monospace'; ctx.fillStyle = BONE;
+    ctx.fillText(`compromised: pkg-${String(st.src).padStart(2, '0')}`, 20, 30);
+    ctx.fillStyle = BL; ctx.fillText(`${reached} / ${st.nodes.length} packages reachable`, 20, 50);
+  },
+  doom(ctx, w, h, t) {
+    const cats = [['cooking', ASH], ['gym', ASH], ['cars', ASH], ['pets', ASH]];
+    const cw = Math.min(w * 0.2, h * 0.42), ch = cw * 1.7, gap = 14, speed = 34;
+    const cols = 3, x0 = w / 2 - (cols * cw + (cols - 1) * gap) / 2;
+    for (let c = 0; c < cols; c++) {
+      const off = (t * speed * (c === 1 ? 1.25 : 1)) % (ch + gap);
+      for (let k = -1; k < h / (ch + gap) + 1; k++) {
+        const y = k * (ch + gap) - off + (c === 1 ? -ch / 2 : 0), idx = Math.floor((t * speed * (c === 1 ? 1.25 : 1)) / (ch + gap)) + k + c * 3;
+        const same = idx % 5 === 0 || idx % 5 === 1 || idx % 5 === 2; // a run of the same category
+        ctx.fillStyle = '#141924'; ctx.strokeStyle = same ? BL : WIRE; ctx.lineWidth = same ? 1.5 : 1;
+        ctx.beginPath(); ctx.roundRect(x0 + c * (cw + gap), y, cw, ch, 8); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = same ? 'rgba(255,91,46,.18)' : '#1b2130';
+        ctx.beginPath(); ctx.roundRect(x0 + c * (cw + gap) + 8, y + 8, cw - 16, ch * 0.62, 5); ctx.fill();
+        ctx.font = '11px "JetBrains Mono", monospace'; ctx.fillStyle = same ? BL : ASH;
+        ctx.fillText(same ? 'pets' : cats[(idx >>> 0) % 4][0], x0 + c * (cw + gap) + 10, y + ch * 0.62 + 28);
+      }
+    }
+    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#0e1117'); g.addColorStop(.18, 'rgba(14,17,23,0)'); g.addColorStop(.82, 'rgba(14,17,23,0)'); g.addColorStop(1, '#0e1117');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = 'rgba(7,8,11,.82)'; ctx.beginPath(); ctx.roundRect(16, h - 50, 210, 32, 16); ctx.fill();
+    ctx.fillStyle = BL; ctx.font = '500 12px "JetBrains Mono", monospace'; ctx.fillText('● pets × 3 in a row', 30, h - 29);
+  },
+  reel(ctx, w, h, t) {
+    const n = 4, pw = Math.min(w * 0.16, h * 0.38), ph = pw * 1.48, gap = pw * 0.22, x0 = w / 2 - (n * pw + (n - 1) * gap) / 2, y0 = h * 0.14;
+    const scores = [[.82, .4, .7], [.64, .78, .5], [.9, .55, .62], [.48, .7, .86]];
+    for (let i = 0; i < n; i++) {
+      const lift = Math.sin(t * 1.2 + i * 0.9) * 4, x = x0 + i * (pw + gap), best = Math.floor(t / 2.5) % n === i;
+      const g = ctx.createLinearGradient(x, y0, x, y0 + ph); g.addColorStop(0, best ? '#3a1b12' : '#1b2130'); g.addColorStop(1, '#0f131b');
+      ctx.fillStyle = g; ctx.strokeStyle = best ? BL : WIRE; ctx.lineWidth = best ? 1.5 : 1;
+      ctx.beginPath(); ctx.roundRect(x, y0 + lift, pw, ph, 6); ctx.fill(); ctx.stroke();
+      for (let s = 0; s < 6; s++) { ctx.fillStyle = '#07080b'; ctx.fillRect(x + 5, y0 + lift + 8 + s * (ph - 16) / 6, 5, 7); ctx.fillRect(x + pw - 10, y0 + lift + 8 + s * (ph - 16) / 6, 5, 7); }
+      scores[i].forEach((v, k) => {
+        const by = y0 + ph + 22 + k * 11, grow = Math.min(1, (t % 2.5) * 1.6);
+        ctx.fillStyle = '#1b2130'; ctx.fillRect(x, by, pw, 5);
+        ctx.fillStyle = best ? BL : ASH; ctx.fillRect(x, by, pw * v * (best ? grow : 1), 5);
+      });
+    }
+    ctx.font = '11px "JetBrains Mono", monospace'; ctx.fillStyle = ASH; ctx.fillText('compare · genre · runtime · mood', x0, y0 + ph + 68);
+  },
+  trace(ctx, w, h, t) {
+    const bx = w * 0.08, by = h * 0.12, bw = w * 0.84, bh = h * 0.8;
+    ctx.fillStyle = '#121620'; ctx.strokeStyle = WIRE; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 10); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = WIRE; [0, 1, 2].forEach(i => { ctx.beginPath(); ctx.arc(bx + 16 + i * 14, by + 16, 4, 0, 7); ctx.fill(); });
+    const tabs = ['docs', 'issue #412', 'stack trace', 'PR review'];
+    const active = Math.floor(t / 1.6) % tabs.length;
+    tabs.forEach((tb, i) => {
+      const tx = bx + 64 + i * Math.min(110, (bw - 80) / 4);
+      ctx.fillStyle = i === active ? '#1d2331' : 'transparent'; ctx.beginPath(); ctx.roundRect(tx, by + 6, Math.min(100, (bw - 90) / 4), 22, 5); ctx.fill();
+      ctx.font = '11px "JetBrains Mono", monospace'; ctx.fillStyle = i === active ? BONE : ASH; ctx.fillText(tb, tx + 8, by + 21);
+    });
+    ctx.strokeStyle = WIRE; ctx.beginPath(); ctx.moveTo(bx, by + 34); ctx.lineTo(bx + bw, by + 34); ctx.stroke();
+    // memory thread: each visited tab leaves a node, linked in order
+    const pts = [];
+    for (let i = 0; i < 9; i++) pts.push([bx + 40 + i * (bw - 80) / 8, by + bh * 0.62 + Math.sin(i * 1.7) * bh * 0.16]);
+    const lit = (t * 2) % 12;
+    ctx.lineWidth = 1.5;
+    for (let i = 1; i < pts.length; i++) { ctx.strokeStyle = i <= lit ? BL : WIRE; ctx.beginPath(); ctx.moveTo(...pts[i - 1]); ctx.lineTo(...pts[i]); ctx.stroke(); }
+    pts.forEach((p, i) => { ctx.fillStyle = i <= lit ? BL : ASH; ctx.beginPath(); ctx.arc(p[0], p[1], i <= lit ? 4 : 3, 0, 7); ctx.fill(); });
+    for (let i = 0; i < 3; i++) { ctx.fillStyle = '#1b2130'; ctx.fillRect(bx + 24, by + 52 + i * 14, bw * (0.5 - i * 0.12), 6); }
+    ctx.font = '11px "JetBrains Mono", monospace'; ctx.fillStyle = BL; ctx.fillText('context kept across ' + Math.min(9, Math.floor(lit) + 1) + ' steps', bx + 24, by + bh - 16);
+  },
+  sole(ctx, w, h, t) {
+    // wireframe insole: stacked contour rings of a foot outline, rotated in 3D
+    const cx = w / 2, cy = h / 2 + 6, S = Math.min(w, h) * 0.36, rot = t * 0.5, tilt = 1.05;
+    const outline = a => { // foot-ish: wider toe, narrow arch, round heel
+      const c = Math.cos(a), s = Math.sin(a);
+      const len = 1.0, wid = 0.36 + 0.1 * Math.cos(a) - (s > 0 ? 0.08 * Math.max(0, Math.sin(a * 2)) : 0);
+      return [c * len, s * wid];
+    };
+    for (let L = 0; L < 14; L++) {
+      const z = (L / 13 - 0.5) * 0.28, k = 1 - Math.pow(Math.abs(L / 13 - 0.5) * 2, 2) * 0.35;
+      ctx.beginPath();
+      for (let i = 0; i <= 90; i++) {
+        const a = i / 90 * Math.PI * 2; let [x, y] = outline(a); x *= k; y *= k;
+        const arch = L > 6 ? Math.max(0, Math.sin(a)) * Math.exp(-((Math.cos(a) + 0.1) ** 2) * 6) * 0.12 * (L - 6) / 7 : 0;
+        const zz = z + arch;
+        const xr = x * Math.cos(rot) - y * Math.sin(rot), yr = x * Math.sin(rot) + y * Math.cos(rot);
+        const py = yr * Math.cos(tilt) - zz * Math.sin(tilt) * 2, pz = yr * Math.sin(tilt) + zz;
+        const persp = 1 / (1.8 - pz * 0.4);
+        const sx = cx + xr * S * persp * 1.6, sy = cy + py * S * persp * 1.6;
+        i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
+      }
+      const hot = L === Math.floor((t * 4) % 14);
+      ctx.strokeStyle = hot ? BL : `rgba(141,146,156,${0.25 + L / 30})`; ctx.lineWidth = hot ? 1.6 : 1; ctx.stroke();
+    }
+    ctx.font = '11px "JetBrains Mono", monospace'; ctx.fillStyle = ASH; ctx.fillText('scan → mesh → STL', 20, h - 22);
+    ctx.fillStyle = BL; ctx.fillText('layer ' + (Math.floor((t * 4) % 14) + 1) + ' / 14', w - 110, h - 22);
+  },
+};
+const artEls = [...document.querySelectorAll('canvas[data-art]')].map(c => ({ c, ctx: c.getContext('2d'), st: {}, on: true, fn: arts[c.dataset.art] }));
+const sizeArt = () => artEls.forEach(a => { const r = a.c.getBoundingClientRect(), d = Math.min(devicePixelRatio, 2); a.c.width = r.width * d; a.c.height = r.height * d; a.ctx.setTransform(d, 0, 0, d, 0, 0); a.w = r.width; a.h = r.height; });
+sizeArt(); addEventListener('resize', sizeArt);
+const artIO = new IntersectionObserver(es => es.forEach(e => { const a = artEls.find(x => x.c === e.target); if (a) a.on = e.isIntersecting; }));
+artEls.forEach(a => artIO.observe(a.c));
+const drawArts = (t, force) => artEls.forEach(a => { if (!a.on && !force) return; a.ctx.clearRect(0, 0, a.w, a.h); a.fn(a.ctx, a.w, a.h, t, a.st); });
+if (reduce) drawArts(2.2, true);
+else { const loop = now => { drawArts(now / 1000); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+document.fonts?.ready.then(() => drawArts(reduce ? 2.2 : performance.now() / 1000, true));
+
+/* ───────────── HERO: 3D blast-radius graph ───────────── */
+if (!window.THREE) return;
+const N = [
+  ['me', 'Sourav Goyal', 'core', 'person', 'CS junior at Texas Tech. Everything on this page connects back here.'],
+  ['work', 'Projects', 'hub', 'cluster', 'Things built to answer a question.'],
+  ['stack', 'Stack', 'hub', 'cluster', 'Languages and tools that shipped in real projects.'],
+  ['oss', 'Open Source', 'hub', 'cluster', 'Six merged pull requests in repositories owned by others.'],
+  ['path', 'Journey', 'hub', 'cluster', 'School, jobs, and the people along the way.'],
+  ['life', 'Off the clock', 'hub', 'cluster', 'Movies, poetry, design and video.'],
+  ['hydra', 'Hydra Blast Radius', 'leaf', 'project', 'Maps npm dependencies and shared publish rights to show what one compromise reaches.'],
+  ['doom', 'Doomscroll', 'leaf', 'project', 'Local-only Chrome extension that spots repetitive Reels categories.'],
+  ['reel', 'ReelTogether', 'leaf', 'project', 'Movie discovery with private watchlists and side-by-side comparisons.'],
+  ['trace', 'Probe → Trace', 'leaf', 'project', 'Co-founded a memory-augmented browser for developers.'],
+  ['sole', 'NeuroSole', 'leaf', 'project', 'HackRice team prototype for custom 3D-printed insoles.'],
+  ['pulse', 'Movie Pulse', 'leaf', 'project', 'Movie research app joining TMDB, YouTube trailer metrics and OMDb.'],
+  ['ts', 'TypeScript', 'leaf', 'skill', 'Typed frontends and browser extensions.'],
+  ['js', 'JavaScript', 'leaf', 'skill', 'Graph tooling and the web.'],
+  ['py', 'Python', 'leaf', 'skill', 'APIs, scripts and machine learning.'],
+  ['react', 'React', 'leaf', 'skill', 'Interfaces, from extension dashboards to landing pages.'],
+  ['next', 'Next.js', 'leaf', 'skill', 'Full-stack movie apps.'],
+  ['fastapi', 'FastAPI', 'leaf', 'skill', 'Python APIs with background jobs.'],
+  ['sqla', 'SQLAlchemy', 'leaf', 'skill', 'Models and Alembic migrations.'],
+  ['three', 'Three.js', 'leaf', 'skill', '3D on the web. This hero runs on it.'],
+  ['torch', 'PyTorch', 'leaf', 'skill', 'AI minor coursework and NeuroSole.'],
+  ['mv3', 'Chrome MV3', 'leaf', 'skill', 'Manifest V3 extensions.'],
+  ['graphs', 'Graph traversal', 'leaf', 'skill', 'BFS, reachability, blast radius.'],
+  ['juno', 'Juno', 'leaf', 'contribution', 'Merged frontend contribution.'],
+  ['hacktober', 'Hacktoberfest 2025', 'leaf', 'contribution', 'Supercontributor: six merged PRs.'],
+  ['ytdm', 'YouTube DL Manager', 'leaf', 'contribution', 'Merged UI contribution.'],
+  ['ttu', 'Texas Tech', 'leaf', 'school', 'B.S. Computer Science, AI and Math minors, 3.87 GPA.'],
+  ['grader', 'CS 2413 Grader', 'leaf', 'role', 'Supporting about 55 Data Structures students.'],
+  ['atlc', 'ATLC Supervisor', 'leaf', 'role', 'Led student assistants across the computing labs.'],
+  ['lyfe', 'LYFE Mentor', 'leaf', 'role', 'Mentoring engineering underclassmen.'],
+  ['eco', 'Ecology Lab', 'leaf', 'role', 'Undergraduate research experience.'],
+  ['hack', 'Hackathons', 'leaf', 'role', 'HackRice and Hack Hydra 2026.'],
+  ['movies', 'Movies', 'leaf', 'interest', 'The reason two of the projects exist.'],
+  ['poetry', 'Poetry', 'leaf', 'interest', 'Urdu, Hindi and English verse.'],
+  ['design', 'Design & video', 'leaf', 'interest', 'Figma, Premiere Pro, After Effects.'],
+];
+const E = [
+  ['me', 'work'], ['me', 'stack'], ['me', 'oss'], ['me', 'path'], ['me', 'life'],
+  ['work', 'hydra'], ['work', 'doom'], ['work', 'reel'], ['work', 'trace'], ['work', 'sole'], ['work', 'pulse'],
+  ['stack', 'ts'], ['stack', 'js'], ['stack', 'py'], ['stack', 'react'], ['stack', 'next'], ['stack', 'fastapi'], ['stack', 'sqla'], ['stack', 'three'], ['stack', 'torch'], ['stack', 'mv3'], ['stack', 'graphs'],
+  ['oss', 'juno'], ['oss', 'hacktober'], ['oss', 'ytdm'],
+  ['path', 'ttu'], ['path', 'hack'], ['path', 'trace'],
+  ['ttu', 'grader'], ['ttu', 'atlc'], ['ttu', 'lyfe'], ['ttu', 'eco'], ['ttu', 'torch'],
+  ['life', 'movies'], ['life', 'poetry'], ['life', 'design'],
+  ['hydra', 'js'], ['hydra', 'graphs'], ['hydra', 'hack'],
+  ['doom', 'ts'], ['doom', 'react'], ['doom', 'mv3'],
+  ['reel', 'next'], ['reel', 'ts'], ['reel', 'fastapi'], ['reel', 'sqla'], ['reel', 'movies'],
+  ['pulse', 'next'], ['pulse', 'fastapi'], ['pulse', 'movies'], ['pulse', 'py'],
+  ['sole', 'react'], ['sole', 'three'], ['sole', 'torch'], ['sole', 'hack'],
+  ['fastapi', 'py'], ['hacktober', 'juno'], ['hacktober', 'ytdm'], ['ytdm', 'py'], ['trace', 'design'], ['grader', 'graphs'],
+];
+const idx = Object.fromEntries(N.map((n, i) => [n[0], i]));
+const nodes = N.map(([id, name, tier, kind, desc]) => ({ id, name, tier, kind, desc, p: new THREE.Vector3((Math.random() - .5) * 80, (Math.random() - .5) * 80, (Math.random() - .5) * 80), v: new THREE.Vector3(), heat: 0, actAt: Infinity }));
+const edges = E.map(([a, b]) => ({ a: idx[a], b: idx[b], heat: 0, rest: (nodes[idx[a]].tier === 'core' ? 15 : nodes[idx[a]].tier === 'hub' && nodes[idx[b]].tier === 'leaf' ? 10 : 14) }));
+const adj = nodes.map(() => []); edges.forEach(e => { adj[e.a].push(e.b); adj[e.b].push(e.a); });
+
+const canvas = document.getElementById('graph'), hero = canvas.parentElement;
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x07080b, 0.0085);
+const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 600);
+camera.position.set(0, 0, 78);
+const world = new THREE.Group(); scene.add(world);
+
+const glowTex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+  const r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.12, 'rgba(255,255,255,.95)'); r.addColorStop(0.28, 'rgba(255,255,255,.28)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
+})();
+const boneC = new THREE.Color(0xece6da), ashC = new THREE.Color(0x8d929c), blastC = new THREE.Color().setRGB(...BLAST), wireC = new THREE.Color(0x3a4458);
+const baseSize = { core: 7, hub: 4.6, leaf: 2.4 };
+nodes.forEach(n => {
+  n.mat = new THREE.SpriteMaterial({ map: glowTex, color: n.tier === 'leaf' ? ashC.clone() : boneC.clone(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  n.sprite = new THREE.Sprite(n.mat); n.sprite.scale.setScalar(baseSize[n.tier]); world.add(n.sprite);
+});
+// hub rings
+const ringGeo = new THREE.RingGeometry(1.0, 1.08, 64);
+nodes.filter(n => n.tier !== 'leaf').forEach(n => {
+  n.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0x8d929c, transparent: true, opacity: .35, side: THREE.DoubleSide, depthWrite: false }));
+  n.ring.scale.setScalar(n.tier === 'core' ? 3.4 : 2.2); world.add(n.ring);
+});
+const ePos = new Float32Array(edges.length * 6), eCol = new Float32Array(edges.length * 6);
+const eGeo = new THREE.BufferGeometry();
+eGeo.setAttribute('position', new THREE.BufferAttribute(ePos, 3)); eGeo.setAttribute('color', new THREE.BufferAttribute(eCol, 3));
+world.add(new THREE.LineSegments(eGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .9, blending: THREE.AdditiveBlending, depthWrite: false })));
+
+// dust field
+const dustN = 1400, dPos = new Float32Array(dustN * 3);
+for (let i = 0; i < dustN; i++) { const r = 60 + Math.random() * 160, a = Math.random() * 6.283, b = Math.acos(2 * Math.random() - 1); dPos.set([r * Math.sin(b) * Math.cos(a), r * Math.sin(b) * Math.sin(a), r * Math.cos(b)], i * 3); }
+const dGeo = new THREE.BufferGeometry(); dGeo.setAttribute('position', new THREE.BufferAttribute(dPos, 3));
+const dust = new THREE.Points(dGeo, new THREE.PointsMaterial({ map: glowTex, size: 1.1, color: 0x5d6575, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+scene.add(dust);
+
+// packets travelling along edges during a blast
+const packets = [];
+const packetPool = Array.from({ length: 90 }, () => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: blastC, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); s.visible = false; s.scale.setScalar(2.4); world.add(s); return s; });
+
+// labels
+const labelLayer = document.getElementById('labels');
+nodes.forEach(n => { n.lbl = document.createElement('div'); n.lbl.className = 'lbl' + (n.tier !== 'leaf' ? ' hub' : ''); n.lbl.textContent = n.name; labelLayer.appendChild(n.lbl); });
+
+/* force layout */
+let alpha = 1;
+function simStep() {
+  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+    const A = nodes[i], B = nodes[j], d = A.p.clone().sub(B.p), l2 = Math.max(d.lengthSq(), 4);
+    const f = d.multiplyScalar(220 / l2 / Math.sqrt(l2) * alpha);
+    A.v.add(f); B.v.sub(f);
+  }
+  edges.forEach(e => {
+    const A = nodes[e.a], B = nodes[e.b], d = B.p.clone().sub(A.p), l = d.length() || 1;
+    const f = d.multiplyScalar((l - e.rest) / l * 0.06 * alpha);
+    A.v.add(f); B.v.sub(f);
+  });
+  nodes.forEach(n => {
+    if (n.tier === 'core') { n.p.multiplyScalar(0.9); n.v.set(0, 0, 0); return; }
+    n.v.add(n.p.clone().multiplyScalar(-0.004 * alpha));
+    n.v.multiplyScalar(0.82); n.p.add(n.v);
+  });
+  alpha = Math.max(0.02, alpha * 0.992);
+}
+if (reduce) for (let i = 0; i < 500; i++) simStep();
+
+/* blast */
+const ui = { kind: document.getElementById('i-kind'), name: document.getElementById('i-name'), desc: document.getElementById('i-desc'), reach: document.getElementById('i-reach'), hops: document.getElementById('i-hops'), links: document.getElementById('i-links') };
+const HOP = 380;
+let userTouched = false;
+function blast(i) {
+  const now = performance.now(), dist = nodes.map(() => Infinity); dist[i] = 0; const q = [i];
+  while (q.length) { const a = q.shift(); adj[a].forEach(b => { if (dist[b] === Infinity) { dist[b] = dist[a] + 1; q.push(b); } }); }
+  nodes.forEach((n, k) => { n.actAt = now + (reduce ? 0 : dist[k] * HOP); n.dist = dist[k]; });
+  edges.forEach(e => {
+    const [from, to] = dist[e.a] < dist[e.b] ? [e.a, e.b] : [e.b, e.a];
+    e.actAt = now + (reduce ? 0 : dist[from] * HOP + HOP);
+    if (!reduce && dist[to] === dist[from] + 1) packets.push({ from, to, t0: now + dist[from] * HOP, dur: HOP });
+  });
+  const n = nodes[i], maxHop = Math.max(...dist.filter(d => d < Infinity));
+  ui.kind.textContent = `node · ${n.kind}`; ui.name.textContent = n.name; ui.desc.textContent = n.desc;
+  countTo(ui.reach, nodes.length - 1, maxHop * HOP); countTo(ui.hops, maxHop, maxHop * HOP);
+  ui.links.innerHTML = '';
+  adj[i].forEach(b => { const c = document.createElement('button'); c.className = 'chip'; c.type = 'button'; c.textContent = nodes[b].name; c.onclick = () => { userTouched = true; blast(b); }; ui.links.appendChild(c); });
+  focusNode = i;
+}
+function countTo(el, to, dur) {
+  if (reduce || dur === 0) { el.textContent = to; return; }
+  const t0 = performance.now(); const s = now => { const k = Math.min(1, (now - t0) / dur); el.textContent = Math.round(to * k); if (k < 1) requestAnimationFrame(s); }; requestAnimationFrame(s);
+}
+
+/* interaction */
+let rotY = 0, rotX = -0.12, vY = reduce ? 0 : 0.0016, vX = 0, drag = null, hover = -1, focusNode = 0;
+const screen = nodes.map(() => ({ x: 0, y: 0, z: 0 }));
+canvas.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, moved: 0 }; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointermove', e => {
+  const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  if (drag) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved += Math.abs(dx) + Math.abs(dy);
+    vY = dx * 0.0045; vX = dy * 0.0045; drag.x = e.clientX; drag.y = e.clientY;
+    if (drag.moved > 6) canvas.classList.add('dragging');
+    return;
+  }
+  let best = -1, bd = 26 * 26;
+  screen.forEach((s, i) => { const d = (s.x - mx) ** 2 + (s.y - my) ** 2; if (s.z < 1 && d < bd) { bd = d; best = i; } });
+  hover = best; canvas.classList.toggle('pointing', best >= 0);
+});
+canvas.addEventListener('pointerup', () => {
+  if (drag && drag.moved < 6 && hover >= 0) { userTouched = true; blast(hover); }
+  if (drag && drag.moved >= 6) userTouched = true;
+  drag = null; canvas.classList.remove('dragging');
+});
+canvas.addEventListener('pointerleave', () => { hover = -1; });
+
+function resize() { const w = hero.clientWidth, h = hero.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); camera.position.z = w < 700 ? 104 : 78; }
+resize(); addEventListener('resize', resize);
+
+// on narrow screens the copy sits at the top, so nudge the graph down; on wide, right
+const offset = () => innerWidth < 900 ? new THREE.Vector3(0, -8, 0) : new THREE.Vector3(14, 4, 0);
+
+let heroVisible = true;
+new IntersectionObserver(es => heroVisible = es[0].isIntersecting).observe(hero);
+
+const tmp = new THREE.Vector3();
+let started = performance.now(), autoNext = started + 2400, autoList = ['me', 'hydra', 'ttu', 'reel', 'hacktober', 'poetry', 'doom', 'sole'], autoI = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (!heroVisible) return;
+  if (!reduce && alpha > 0.021) simStep();
+  if (!reduce && !userTouched && now > autoNext) { blast(idx[autoList[autoI++ % autoList.length]]); autoNext = now + 7000; }
+
+  if (!drag) { vY += ((reduce ? 0 : 0.0016) - vY) * 0.02; vX *= 0.94; }
+  rotY += vY; rotX = Math.max(-1.1, Math.min(1.1, rotX + vX));
+  world.rotation.set(rotX, rotY, 0);
+  world.position.copy(offset());
+  // scroll parallax: camera eases back as the hero leaves
+  const sp = Math.min(1, scrollY / hero.clientHeight);
+  camera.position.y = -sp * 18; camera.lookAt(0, -sp * 10, 0);
+  dust.rotation.y = now * 0.00002; dust.rotation.x = now * 0.00001;
+
+  // node heat
+  nodes.forEach((n, i) => {
+    const since = now - n.actAt;
+    const heat = since < 0 ? 0 : Math.max(0, 1 - Math.max(0, since - 2600) / 3200);
+    const pop = since >= 0 && since < 500 ? Math.sin(since / 500 * Math.PI) : 0;
+    n.heat = heat;
+    const base = n.tier === 'leaf' ? ashC : boneC;
+    n.mat.color.copy(base).lerp(blastC, heat * (n.tier === 'core' ? .6 : 1));
+    const s = baseSize[n.tier] * (1 + pop * 0.9 + (i === hover ? 0.45 : 0));
+    n.sprite.scale.setScalar(s); n.sprite.position.copy(n.p);
+    if (n.ring) { n.ring.position.copy(n.p); n.ring.quaternion.copy(camera.quaternion).premultiply(world.quaternion.clone().invert()); n.ring.material.color.copy(ashC).lerp(blastC, heat); n.ring.material.opacity = .25 + heat * .5; const rs = (n.tier === 'core' ? 3.4 : 2.2) * (1 + pop * 0.6); n.ring.scale.setScalar(rs); }
+  });
+  edges.forEach((e, k) => {
+    const A = nodes[e.a].p, B = nodes[e.b].p; ePos.set([A.x, A.y, A.z, B.x, B.y, B.z], k * 6);
+    const since = now - (e.actAt ?? Infinity), heat = since < 0 ? 0 : Math.max(0, 1 - Math.max(0, since - 2200) / 3200);
+    const c = wireC.clone().lerp(blastC, heat * 0.85);
+    eCol.set([c.r, c.g, c.b, c.r, c.g, c.b], k * 6);
+  });
+  eGeo.attributes.position.needsUpdate = true; eGeo.attributes.color.needsUpdate = true;
+
+  // packets
+  packetPool.forEach(s => s.visible = false);
+  for (let k = packets.length - 1; k >= 0; k--) {
+    const p = packets[k], u = (now - p.t0) / p.dur;
+    if (u > 1) { packets.splice(k, 1); continue; }
+    if (u < 0) continue;
+    const s = packetPool.find(q => !q.visible); if (!s) break;
+    s.visible = true; s.position.copy(nodes[p.from].p).lerp(nodes[p.to].p, u); s.scale.setScalar(2.6 * Math.sin(u * Math.PI) + 0.6);
+  }
+
+  renderer.render(scene, camera);
+
+  // labels
+  const w = hero.clientWidth, h = hero.clientHeight;
+  nodes.forEach((n, i) => {
+    tmp.copy(n.p).applyMatrix4(world.matrixWorld).project(camera);
+    const x = (tmp.x * .5 + .5) * w, y = (-tmp.y * .5 + .5) * h; screen[i] = { x, y, z: tmp.z };
+    const depth = Math.max(0, Math.min(1, (0.985 - tmp.z) * 40));
+    let o = n.tier === 'leaf' ? Math.max(n.heat > 0.05 ? n.heat : 0, i === hover ? 1 : 0, i === focusNode ? 1 : 0) : 0.85;
+    o *= 0.25 + depth * 0.75;
+    n.lbl.style.opacity = tmp.z > 1 ? 0 : o.toFixed(3);
+    n.lbl.style.transform = `translate(${x.toFixed(1)}px, ${(y + (n.tier === 'core' ? 0 : -16)).toFixed(1)}px) translate(-50%, -50%)`;
+    n.lbl.classList.toggle('hot', n.heat > 0.4 && n.tier !== 'core');
+    n.lbl.style.display = n.tier === 'core' ? 'none' : '';
+  });
+}
+requestAnimationFrame(frame);
+if (reduce) blast(0);
+})();
+</script>
+</body>
+</html>
