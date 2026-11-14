@@ -68,7 +68,7 @@ body.rolling .film::before, body.rolling .film::after { transform: none; }
 
 /* ── beats: text that lives at a point in the film ── */
 .beat { position: fixed; z-index: 10; pointer-events: none; opacity: 0; will-change: opacity, transform, filter; }
-.center::before { content: ""; position: absolute; inset: -30% -12%; z-index: -1; background: radial-gradient(closest-side, rgba(2,3,8,.62), rgba(2,3,8,0)); filter: blur(24px); }
+.center::before { content: ""; position: absolute; inset: -30% -12%; z-index: -1; background: radial-gradient(closest-side, rgba(2,3,6,.72), rgba(2,3,6,0)); filter: blur(24px); }
 .left:not(.proj)::before { content: ""; position: absolute; inset: -20% -30% -20% -40%; z-index: -1; background: radial-gradient(closest-side, rgba(2,3,8,.5), rgba(2,3,8,0)); filter: blur(30px); }
 .beat.live { pointer-events: auto; }
 .left { left: var(--g); top: 50%; max-width: min(560px, 86vw); }
@@ -432,7 +432,7 @@ const grade = new THREE.ShaderPass({
     void main(){
       vec2 uv=vUv; vec2 c=uv-.5; float asp=uRes.x/uRes.y; float r=length(c*vec2(asp,1.));
       vec2 px=1./uRes;
-      vec2 off=c*px*uAb*(1.+r*r*6.);
+      vec2 off=c*px*uAb*(1.+r*r*3.);
       vec3 col=vec3(texture2D(tDiffuse,uv+off).r, texture2D(tDiffuse,uv).g, texture2D(tDiffuse,uv-off).b);
       // soft focus toward the edges of frame
       float eb=smoothstep(.42,1.05,r)*uEdge;
@@ -473,7 +473,7 @@ const GRADES = [
   { lift: [-.018, -.022, -.02], gain: [1.06, .99, .97], sh: [.016, -.004, -.006], hi: [.03, .004, -.02], sat: .4, con: 1.2, exp: 1.0 },
   { lift: [-.018, -.022, -.022], gain: [1.06, 1.0, .96], sh: [.014, -.004, -.008], hi: [.035, .006, -.025], sat: .42, con: 1.22, exp: .98 },
   { lift: [-.02, -.02, -.016], gain: [1.02, 1.0, 1.0], sh: [.01, -.004, .0], hi: [.02, .004, -.01], sat: .3, con: 1.2, exp: 1.04 },
-  { lift: [-.008, -.01, -.006], gain: [1.08, .98, .94], sh: [.018, -.004, -.004], hi: [.04, .006, -.03], sat: .55, con: 1.18, exp: 1.3 },
+  { lift: [-.006, -.002, .0], gain: [1.06, 1.0, .96], sh: [-.012, .02, .026], hi: [.04, .01, -.02], sat: .9, con: 1.14, exp: 1.25 },
 ];
 const gradeNow = { lift: new THREE.Vector3(), gain: new THREE.Vector3(), sh: new THREE.Vector3(), hi: new THREE.Vector3() };
 
@@ -699,43 +699,137 @@ const conLabels = MILESTONES.map((m, i) => { const el = document.createElement('
 
 /* ═════════ Chapter 6: the city and the signal ═════════ */
 const CITY = new THREE.Vector3(0, -260, -2250);
-const city = (() => {
-  const n = small ? 700 : 1400, geo = new THREE.BoxGeometry(1, 1, 1); geo.translate(0, .5, 0);
-  const mat = new THREE.ShaderMaterial({ uniforms: { ...U },
-    vertexShader: `varying vec3 vW; varying vec3 vN; varying float vH;
-void main(){ mat4 im=mat4(1.); 
+// Inspired by a rainy neon avenue at night: you stand in the street looking up between towers
+// that vanish into fog, with stacked neon and billboards (all showing Sourav's own work).
+const BOX = new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0);
+const BUILD_MAT = new THREE.ShaderMaterial({ uniforms: { ...U },
+  vertexShader: `varying vec3 vW; varying vec3 vN; varying float vH;
+void main(){ mat4 im=mat4(1.);
 #ifdef USE_INSTANCING
  im=instanceMatrix;
 #endif
  vec4 w=modelMatrix*im*vec4(position,1.); vW=w.xyz; vN=normalize(mat3(modelMatrix*im)*normal); vH=position.y; gl_Position=projectionMatrix*viewMatrix*w; }`,
-    fragmentShader: `uniform float uTime; varying vec3 vW; varying vec3 vN; varying float vH;
-      float h(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
-      void main(){ vec3 base=vec3(.018,.022,.035);
-        vec2 uv = abs(vN.x)>.5 ? vW.zy : vW.xy; vec2 cell=floor(uv*vec2(.8,.6)); vec2 f=fract(uv*vec2(.8,.6));
-        float win=step(.25,f.x)*step(f.x,.75)*step(.3,f.y)*step(f.y,.75);
-        float on=step(.84,h(cell+floor(vW.xz*.07)));
-        float flick=.85+.15*sin(uTime*3.+h(cell)*40.);
-        vec3 wc=mix(vec3(1.,.42,.12),vec3(.85,.88,.95),step(.8,h(cell*1.3)));
-        vec3 col=base+wc*win*on*flick*(abs(vN.y)<.5?1.:0.)*.75;
-        float top=step(.98,vH); col+=vec3(.06,.07,.1)*top; col+=vec3(.05,.055,.07)*pow(1.-abs(dot(vN,normalize(cameraPosition-vW))),3.);
-        float fog=smoothstep(60.,520.,distance(vW,cameraPosition)); col=mix(col,vec3(.025,.03,.05),fog*.8);
-        gl_FragColor=vec4(col,1.); }` });
-  const im = new THREE.InstancedMesh(geo, mat, n), d = new THREE.Object3D();
+  fragmentShader: `uniform float uTime; varying vec3 vW; varying vec3 vN; varying float vH;
+    float h(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+    void main(){ vec3 base=vec3(.016,.02,.024);
+      vec2 uv = abs(vN.x)>.5 ? vW.zy : vW.xy; vec2 cell=floor(uv*vec2(.7,.5)); vec2 f=fract(uv*vec2(.7,.5));
+      float win=step(.22,f.x)*step(f.x,.78)*step(.28,f.y)*step(f.y,.78);
+      float lot=h(floor(cell/vec2(6.,4.))+floor(vW.xz*.05));
+      float on=step(.93-lot*.1,h(cell+floor(vW.xz*.07)));
+      float flick=.88+.12*sin(uTime*2.+h(cell)*40.);
+      vec3 wc=mix(vec3(1.,.62,.3),vec3(.8,.9,.95),step(.82,h(cell*1.3)));
+      vec3 col=base+wc*win*on*flick*(abs(vN.y)<.5?1.:0.)*.42;
+      col+=vec3(.05,.07,.075)*pow(1.-abs(dot(vN,normalize(cameraPosition-vW))),3.);
+      float d=distance(vW,cameraPosition);
+      float fog=smoothstep(30.,620.,d); float hf=smoothstep(60.,320.,vW.y+260.);
+      col=mix(col,vec3(.04,.065,.07),clamp(fog*.85+hf*.55,0.,.95));
+      gl_FragColor=vec4(col,1.); }` });
+const cityGroup = new THREE.Group(); cityGroup.position.copy(CITY); scene.add(cityGroup);
+function block(x, z, w, d, h, y = 0) { const m = new THREE.Mesh(BOX, BUILD_MAT); m.scale.set(w, h, d); m.position.set(x, y, z); cityGroup.add(m); return m; }
+function deco(x, z, w, d, h) { // a stepped tower with setbacks and a spire
+  let y = 0;
+  [[1, .58], [.8, .2], [.6, .1], [.4, .07]].forEach(([s, f]) => { block(x, z, w * s, d * s, h * f, y); y += h * f; });
+  block(x, z, 1.4, 1.4, h * .12, y); return y;
+}
+// background city, kept out of the avenue
+const city = (() => {
+  const n = small ? 600 : 1200, im = new THREE.InstancedMesh(BOX, BUILD_MAT, n), d = new THREE.Object3D();
   for (let i = 0; i < n; i++) {
-    let x, z; do { x = (Math.random() - .5) * 900; z = (Math.random() - .5) * 700; } while (Math.abs(x) < 70 && z > 0);
-    const centre = Math.exp(-(x * x + z * z) / 60000);
-    const hgt = 12 + Math.pow(Math.random(), 2.2) * 90 * (0.4 + centre * 1.6);
-    const w = 6 + Math.random() * 14;
-    d.position.set(x, 0, z); d.scale.set(w, hgt, 6 + Math.random() * 14); d.rotation.y = 0; d.updateMatrix(); im.setMatrixAt(i, d.matrix);
+    let x, z; do { x = (Math.random() - .5) * 1100; z = (Math.random() - .5) * 900 - 120; } while (Math.abs(x) < 130 && z > -520);
+    const centre = Math.exp(-(x * x + (z + 300) * (z + 300)) / 90000);
+    d.position.set(x, 0, z); d.scale.set(14 + Math.random() * 22, 30 + Math.pow(Math.random(), 1.8) * 160 * (0.5 + centre * 1.5), 14 + Math.random() * 22); d.updateMatrix(); im.setMatrixAt(i, d.matrix);
   }
-  im.position.copy(CITY); im.frustumCulled = false; scene.add(im); return im;
+  im.frustumCulled = false; cityGroup.add(im); return im;
 })();
-// the tower the beacon sits on
-const tower = new THREE.Mesh(new THREE.BoxGeometry(18, 150, 18).translate(0, 75, 0), city.material.clone()); tower.position.copy(CITY).add(new THREE.Vector3(30, 0, -60)); scene.add(tower);
-const BEACON = tower.position.clone().add(new THREE.Vector3(0, 152, 0));
+// the avenue: two walls of buildings and a landmark tower at the far end
+for (let z = 190; z > -380; z -= 52 + Math.random() * 18) {
+  const hl = 50 + Math.random() * 150, hr = 50 + Math.random() * 150, wl = 40 + Math.random() * 25, wr = 40 + Math.random() * 25;
+  if (Math.random() < .3) deco(-56 - wl / 2, z, wl, 46, hl * 1.5); else block(-56 - wl / 2, z, wl, 46, hl);
+  if (Math.abs(z + 120) < 30) continue; // beacon tower goes here
+  if (Math.random() < .3) deco(56 + wr / 2, z, wr, 46, hr * 1.5); else block(56 + wr / 2, z, wr, 46, hr);
+}
+const landmarkTop = deco(0, -440, 76, 64, 330);
+const tower = block(84, -120, 52, 46, 168);
+const BEACON = CITY.clone().add(new THREE.Vector3(84, 170, -120));
 const beaconGlow = glow(0xff6a50, 30, 1); beaconGlow.position.copy(BEACON); scene.add(beaconGlow);
-// ground haze
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(2400, 2400), new THREE.MeshBasicMaterial({ color: 0x05070c })); ground.rotation.x = -Math.PI / 2; ground.position.copy(CITY).add(new THREE.Vector3(0, -.5, 0)); scene.add(ground);
+// wet street
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(2600, 2600), new THREE.MeshBasicMaterial({ color: 0x06090a })); ground.rotation.x = -Math.PI / 2; ground.position.copy(CITY).add(new THREE.Vector3(0, -.5, 0)); scene.add(ground);
+// light pollution glowing in the fog behind the skyline
+const skyGlow = new THREE.Mesh(new THREE.PlaneGeometry(2400, 900), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+  fragmentShader: `varying vec2 vUv; void main(){ float g=pow(1.-vUv.y,2.2)*smoothstep(0.,.25,vUv.x)*smoothstep(1.,.75,vUv.x); gl_FragColor=vec4(vec3(.06,.13,.13)*g+vec3(.12,.02,.02)*g*g,1.); }` }));
+skyGlow.position.copy(CITY).add(new THREE.Vector3(0, 380, -700)); scene.add(skyGlow);
+
+/* neon and billboards: textures drawn on canvas */
+function neonTex(text, color, vertical) {
+  const fs = 120, c = document.createElement('canvas'), g = c.getContext('2d');
+  const chars = [...text];
+  const setF = () => { g.fontStretch = 'normal'; g.font = `700 ${fs}px "Archivo"`; };
+  setF();
+  const W = vertical ? fs * 1.6 : Math.ceil(g.measureText(text).width) + fs, H = vertical ? chars.length * fs * 1.02 + fs * .8 : fs * 1.9;
+  c.width = W; c.height = H; setF(); g.textAlign = 'center'; g.textBaseline = 'middle';
+  const draw = (blur, style, a) => { g.shadowColor = color; g.shadowBlur = blur; g.fillStyle = style; g.globalAlpha = a;
+    if (vertical) chars.forEach((ch, i) => g.fillText(ch, W / 2, fs * .9 + i * fs * 1.02)); else g.fillText(text, W / 2, H / 2); };
+  draw(60, color, .7); draw(24, color, 1); draw(6, '#ffffff', .85);
+  g.globalAlpha = 1; g.shadowBlur = 0; g.strokeStyle = color; g.lineWidth = 5; g.globalAlpha = .5; g.strokeRect(10, 10, W - 20, H - 20);
+  const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter; return { t, aspect: W / H };
+}
+function boardTex(title, sub, c1, c2, ink = '#ffffff') {
+  const c = document.createElement('canvas'); c.width = 640; c.height = 400; const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 640, 400); gr.addColorStop(0, c1); gr.addColorStop(1, c2); g.fillStyle = gr; g.fillRect(0, 0, 640, 400);
+  for (let y = 0; y < 400; y += 4) { g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(0, y, 640, 1); } // scanlines
+  g.globalAlpha = .18; g.fillStyle = ink; for (let i = 0; i < 6; i++) { g.beginPath(); g.arc(520 - i * 30, 90 + i * 22, 70 - i * 9, 0, 7); g.fill(); } g.globalAlpha = 1;
+  g.fillStyle = ink; g.textBaseline = 'alphabetic'; g.fontStretch = 'expanded';
+  let size = 76; g.font = `800 ${size}px "Archivo"`; while (g.measureText(title).width > 580 && size > 30) { size -= 4; g.font = `800 ${size}px "Archivo"`; }
+  g.fillText(title, 32, 250);
+  g.font = '500 24px "IBM Plex Mono"'; g.globalAlpha = .85; g.fillText(sub, 34, 300); g.globalAlpha = 1;
+  g.fillRect(34, 330, 120, 4);
+  const t = new THREE.CanvasTexture(c); t.minFilter = THREE.LinearFilter; return t;
+}
+const neons = [], boards = [];
+function addNeon(text, color, x, y, z, h, { vertical = false, ry = 0 } = {}) {
+  const { t, aspect } = neonTex(text, color, vertical);
+  const w = vertical ? h * aspect : h * aspect, hh = vertical ? h : h;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, hh), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+  m.position.set(x, y, z); m.rotation.y = ry; cityGroup.add(m);
+  const halo = glow(new THREE.Color(color).getHex(), Math.max(w, hh) * 1.6, .22); halo.position.set(x, y, z + 2); cityGroup.add(halo);
+  const refl = glow(new THREE.Color(color).getHex(), 1, .16); refl.scale.set(w * .7, 70, 1); refl.position.set(x, 16, z + 12); cityGroup.add(refl);
+  neons.push({ m, halo, refl, seed: Math.random() * 100, base: 1, dead: Math.random() < .25 });
+}
+function addBoard(title, sub, c1, c2, x, y, z, w, h, ry = 0) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: boardTex(title, sub, c1, c2), side: THREE.DoubleSide }));
+  m.material.color.setScalar(1.15); m.position.set(x, y, z); m.rotation.y = ry; cityGroup.add(m);
+  const halo = glow(new THREE.Color(c1).getHex(), Math.max(w, h) * 1.9, .2); halo.position.set(x, y, z + 3); cityGroup.add(halo);
+  const refl = glow(new THREE.Color(c1).getHex(), 1, .14); refl.scale.set(w * .8, 60, 1); refl.position.set(x, 14, z + 14); cityGroup.add(refl);
+  boards.push({ m, seed: Math.random() * 100 });
+}
+function buildSigns() {
+  // vertical blade signs jutting out over the street
+  addNeon('DOOMSCROLL', '#2ff3e0', -52, 92, 70, 92, { vertical: true });
+  addNeon('HYDRA', '#ff2b3f', 53, 70, 30, 52, { vertical: true });
+  addNeon('REELTOGETHER', '#ffb04a', -52, 150, -110, 120, { vertical: true });
+  addNeon('NEUROSOLE', '#41ffb4', 53, 132, -200, 88, { vertical: true });
+  addNeon('OPEN 24/7', '#f4f6ff', 53, 26, -40, 9);
+  addNeon('CS 2413', '#2ff3e0', -53, 30, -30, 10);
+  // rooftop letters
+  addNeon('MOVIE PULSE', '#ff2b3f', -86, 196, -250, 18);
+  addNeon('TRACE', '#5fd8ff', 92, 182, -300, 16);
+  addNeon('S G', '#ff2b3f', 0, landmarkTop - 26, -404, 20);
+  addNeon('MISSION LOG', '#ff6a4a', 0, landmarkTop - 46, -404, 7);
+  // the billboard stack at the end of the avenue
+  addBoard('TEXAS TECH', 'CS · AI MINOR · MATH MINOR', '#b00d26', '#1a0306', 0, 46, -400, 64, 40);
+  addBoard('CS 2413', 'DATA STRUCTURES · GRADER', '#0e6b66', '#03100f', -44, 92, -402, 38, 46);
+  addBoard('HACKTOBERFEST', '6 MERGED PULL REQUESTS', '#c96a12', '#1e0d02', 42, 86, -402, 46, 30);
+  addBoard('HACK HYDRA 2026', 'TRACK 2A · BLAST RADIUS', '#e8e8ee', '#5c5f69', 0, 116, -403, 48, 28);
+  addBoard('SUMMER 2027', 'OPEN TO SWE INTERNSHIPS →', '#d0102e', '#2a0208', -4, 13, -396, 82, 22);
+  // facade billboards angled toward the street
+  addBoard('REELTOGETHER', 'COMPARE UP TO FOUR FILMS', '#7a0f1f', '#0b0204', -55, 52, 10, 54, 32, Math.PI / 2 - .5);
+  addBoard('DOOMSCROLL', 'YOUR FEED, AUDITED. LOCALLY.', '#0f5e5a', '#020b0b', 55, 64, -80, 54, 32, -Math.PI / 2 + .5);
+}
+// drifting haze lit by the signs
+[[0x1f8f88, -30, 60, -60, 240, .1], [0xb0102a, 30, 80, -260, 300, .12], [0x1f8f88, 0, 150, -380, 380, .08], [0xff8a3a, -40, 30, -330, 200, .08]]
+  .forEach(([c, x, y, z, s, o]) => { const h = glow(c, s, o); h.position.set(x, y, z); cityGroup.add(h); });
+
 // cloud deck with the emblem projected onto it
 const CLOUD_Y = CITY.y + 330;
 const EMBLEM = new THREE.Vector3(-60, CLOUD_Y, CITY.z - 260);
@@ -818,9 +912,9 @@ keys.push(
   { p: 0.705, pos: () => V(0, 70, -1380), look: () => CON.clone() },
   { p: 0.745, pos: () => V(-20, 45, -1450), look: () => CON.clone().add(V(-10, 0, 0)) },
   { p: 0.835, pos: () => V(20, 35, -1470), look: () => CON.clone().add(V(10, 0, 0)) },
-  { p: 0.880, pos: () => V(0, -60, -1900), look: () => CITY.clone().add(V(0, 60, -150)) },
-  { p: 0.925, pos: () => CITY.clone().add(V(-40, 90, 300)), look: () => CITY.clone().add(V(0, 120, -200)) },
-  { p: 1.000, pos: () => CITY.clone().add(V(-30, 110, 260)), look: () => EMBLEM.clone().add(V(0, -200, 0)) },
+  { p: 0.880, pos: () => V(0, -40, -1880), look: () => CITY.clone().add(V(0, 60, -250)) },
+  { p: 0.925, pos: () => CITY.clone().add(V(-10, 70, 330)), look: () => CITY.clone().add(V(0, 90, -300)) },
+  { p: 1.000, pos: () => CITY.clone().add(V(-6, 16, 215)), look: () => CITY.clone().add(V(-14, 128, -230)) },
 );
 keys.sort((a, b) => a.p - b.p);
 const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
@@ -962,6 +1056,10 @@ function frame(now) {
     }
     rain.position.set(camera.position.x, 0, camera.position.z); rainGeo.attributes.position.needsUpdate = true;
   }
+  // neon: a soft hum in brightness; a few tubes stutter
+  if (cityGroup.visible) neons.forEach(n => { let k = .9 + .1 * Math.sin(t * 13 + n.seed);
+    if (n.dead && (Math.sin(t * 2.3 + n.seed) > .86)) k = Math.random() < .5 ? .15 : 1;
+    n.m.material.opacity = k; n.halo.material.opacity = .22 * k; n.refl.material.opacity = .16 * k; });
   // lightning
   if (prog > 0.88 && !reduce) {
     if (t > nextFlash) { flashT = t; nextFlash = t + 5 + Math.random() * 7; Sound.thunder(); }
@@ -1018,7 +1116,7 @@ function frame(now) {
   // skip drawing far-off chapters
   const z = camera.position.z;
   galaxy.visible = galCore.visible = galCore2.visible = prog > 0.08 && prog < 0.47;
-  city.visible = tower.visible = ground.visible = cloud.visible = beam.visible = beaconGlow.visible = flash.visible = prog > 0.85;
+  cityGroup.visible = ground.visible = skyGlow.visible = cloud.visible = beam.visible = beaconGlow.visible = flash.visible = prog > 0.85;
   moon.visible = halo.visible = ring.visible = prog < 0.3;
   sun.visible = corona.visible = corona2.visible = belt.visible = prog > 0.36 && prog < 0.82;
   planetMeshes.forEach(m => m.visible = sun.visible);
@@ -1156,6 +1254,7 @@ const pct = $('#pct'), bar = $('#bar'), msg = $('#msg');
 let lp = 0; const L0 = performance.now();
 requestAnimationFrame(frame);
 (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
+  buildSigns();
   planetLabels.concat(stackSprites).forEach(s => s.userData.redraw && s.userData.redraw());
   emblemTex.image.getContext('2d'); // re-draw emblem with the loaded face
   const g = emblemTex.image.getContext('2d'); g.clearRect(0, 0, 512, 512);
