@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises'
 
-const routes = ['/', '/about', '/skills', '/projects', '/journey', '/blog', '/contact']
+const routes = ['/']
 const configuredUrl = process.env.SITE_URL || process.env.VITE_SITE_URL
 
 if (!configuredUrl) {

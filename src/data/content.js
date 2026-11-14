@@ -175,15 +175,14 @@ export const projects = [
   },
   {
     id: 4,
-    title: 'Personal Portfolio v3',
+    title: 'Personal Portfolio v4',
     tag: 'Web Dev',
     emoji: '💻',
     desc:
-      'This little corner of the internet: a warm graph-paper portfolio with poetry, projects, and an interactive crew of cats, frogs, a dog, and a snail. Built with React, Vite, Tailwind, and Framer Motion.',
-    tech: ['React', 'Vite', 'Framer Motion', 'Tailwind'],
-    // TODO: set the live URL + repo once deployed/pushed
-    link: null,
-    github: null,
+      'This site: a scroll-driven flight through space, from a moon to a rainy neon city, where every planet is a project. Built with React, Vite and Three.js, with a custom colour-grading pass and a generated organ score.',
+    tech: ['React', 'Three.js', 'GLSL', 'Web Audio'],
+    link: 'https://sogoyalz.github.io/personal-website/',
+    github: 'https://github.com/sogoyalz/personal-website',
   },
   {
     id: 'movie-pulse',
@@ -602,11 +601,10 @@ You were so far inside my life, some part of me is still asking you back in.`,
   ],
 }
 
+// Sections of the single-page site, in nav order.
 export const navLinks = [
+  { to: 'work', label: 'Work' },
   { to: 'about', label: 'About' },
-  { to: 'skills', label: 'Skills' },
-  { to: 'projects', label: 'Projects' },
-  { to: 'journey', label: 'Journey' },
-  { to: 'blog', label: 'Blog' },
+  { to: 'experience', label: 'Experience' },
   { to: 'contact', label: 'Contact' },
 ]

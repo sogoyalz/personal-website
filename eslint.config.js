@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
   {
-    ignores: ['dist/**', 'node_modules/**'],
+    ignores: ['dist/**', 'node_modules/**', 'design/**'],
   },
   {
     files: ['**/*.{js,jsx,mjs}'],
@@ -29,12 +29,6 @@ export default [
       ...reactHooks.configs.flat.recommended.rules,
       ...reactRefresh.configs.vite.rules,
       'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^[A-Z_]' }],
-    },
-  },
-  {
-    files: ['src/context/ThemeContext.jsx'],
-    rules: {
-      'react-refresh/only-export-components': 'off',
     },
   },
 ]

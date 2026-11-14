@@ -1,15 +1,16 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { navLinks, projects, timeline } from '../src/data/content.js'
+import { CHAPTERS, MILESTONES, SECTIONS, STORY, WORLDS } from '../src/data/experience.js'
 
-const activeRoutes = new Set(['about', 'skills', 'projects', 'journey', 'blog', 'contact'])
-
-test('navigation points only to unique active routes', () => {
+test('navigation points to unique sections the film can jump to', () => {
   const destinations = navLinks.map(({ to }) => to)
 
   assert.equal(new Set(destinations).size, destinations.length)
-  assert.deepEqual(new Set(destinations), activeRoutes)
-  assert.equal(destinations.includes('poetry'), false)
+  for (const to of destinations) {
+    assert.ok(to in SECTIONS, `No scroll position for section "${to}"`)
+    assert.ok(SECTIONS[to] >= 0 && SECTIONS[to] <= 1)
+  }
 })
 
 test('projects have stable unique IDs and usable metadata', () => {
@@ -34,4 +35,22 @@ test('featured experience cards include concise summaries', () => {
   for (const item of featured) {
     assert.ok(item.summary?.trim(), `${item.title} needs a featured summary`)
   }
+})
+
+test('every planet is a real project with a secure link', () => {
+  assert.ok(WORLDS.length > 0)
+  for (const world of WORLDS) {
+    assert.ok(world.desc.trim(), `${world.name} needs a description`)
+    assert.equal(new URL(world.href).protocol, 'https:', `${world.name} needs an https link`)
+  }
+})
+
+test('chapters and story beats run in order through the scroll', () => {
+  for (let i = 1; i < CHAPTERS.length; i++) assert.ok(CHAPTERS[i].p > CHAPTERS[i - 1].p, `${CHAPTERS[i].name} is out of order`)
+  for (const s of STORY) assert.ok(s.a < s.b && s.b <= s.c && s.c < s.d, 'story beats must fade in, hold, then fade out')
+})
+
+test('the constellation has one star per milestone and ends on the next step', () => {
+  assert.equal(MILESTONES.length, 8, 'the 3D constellation is drawn for exactly eight stars')
+  assert.equal(MILESTONES.at(-1).future, true)
 })
